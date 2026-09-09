@@ -1,12 +1,14 @@
-// Supabase Edge Function: POST /search
+// Supabase Edge Function：/search（POST）、/geocode（GET）、/masters（GET）
 //
-// 持 HotPepper Key（环境变量，绝不进前端）+ 缓存 + 打分。见 ADR-005。
+// 持 HotPepper / Google Key（Supabase secret，绝不进前端）+ 缓存 + 打分。见 ADR-005。
 // 业务逻辑全在 ../_shared/*，本文件只做 HTTP 壳。
-// 本地调试无需 Deno：`npm run dev` 会用 scripts/dev-server.mjs 跑同一条管道。
+// 本地调试无需 Deno：`npm run dev` 用 scripts/dev-server.mjs 跑同一条管道。
 //
-// 部署：supabase functions deploy search
-// 环境变量：supabase secrets set HOTPEPPER_API_KEY=xxxx
-//   未设 key 时自动走演示数据（mock），方便先联调前端。
+// 部署见 docs/deploy.md。
+// secret：HOTPEPPER_API_KEY / GOOGLE_PLACES_API_KEY / APP_TOKEN
+//   - 未设 HOTPEPPER_API_KEY → 走演示数据
+//   - 未设 GOOGLE_PLACES_API_KEY → 评分 / 地理编码降级
+//   - 设了 APP_TOKEN → 所有请求必须带 X-App-Token 头且匹配（挡住捡到 URL 的人）
 
 import {
   HttpError,
@@ -22,8 +24,8 @@ const MOCK_SHOPS = (mockData as { shop: RawShop[] }).shop;
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "content-type, authorization",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "content-type, authorization, x-app-token",
 };
 
 // deno-lint-ignore no-explicit-any
@@ -31,6 +33,12 @@ const Deno: any = (globalThis as any).Deno;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+
+  // 应用层鉴权：设了 APP_TOKEN 就强制校验，挡住拿到 URL 但没 token 的人
+  const appToken = Deno.env.get("APP_TOKEN") ?? "";
+  if (appToken && req.headers.get("x-app-token") !== appToken) {
+    return json({ error: "未授权" }, 401);
+  }
 
   const key = Deno.env.get("HOTPEPPER_API_KEY") ?? undefined;
   const gkey = Deno.env.get("GOOGLE_PLACES_API_KEY") ?? undefined;

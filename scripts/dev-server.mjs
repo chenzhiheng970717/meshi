@@ -37,7 +37,7 @@ const MIME = {
 const CORS = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "POST, GET, OPTIONS",
-  "access-control-allow-headers": "content-type",
+  "access-control-allow-headers": "content-type, x-app-token",
 };
 
 const server = createServer(async (req, res) => {
@@ -46,6 +46,12 @@ const server = createServer(async (req, res) => {
   if (req.method === "OPTIONS") {
     res.writeHead(204, CORS).end();
     return;
+  }
+
+  const appToken = process.env.APP_TOKEN ?? "";
+  if (appToken && url.pathname !== "/" && !url.pathname.match(/\.(html|js|css|svg)$/) &&
+      req.headers["x-app-token"] !== appToken) {
+    return send(res, 401, { error: "未授权" });
   }
 
   if (url.pathname === "/masters") {
