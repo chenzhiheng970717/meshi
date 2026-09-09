@@ -11,12 +11,15 @@ import { haversineM, reachRadiusM } from "./reach.ts";
 import { budgetCodesFor, getMasters } from "./master.ts";
 import { createGoogle } from "./google.ts";
 import {
+  applyGoogleRating,
   type RejectReason,
   scoreShop,
   type ScoreContext,
 } from "./score.ts";
 
 const PAGE_SIZE = 5;
+/** 补 Google 评分并重排的候选数（≈4 批）。评分进排序才公平，但更多＝更多配额。 */
+const GOOGLE_ENRICH_N = 20;
 
 export interface RunOptions {
   env?: { HOTPEPPER_API_KEY?: string; GOOGLE_PLACES_API_KEY?: string };
@@ -167,38 +170,50 @@ export async function runSearch(
   }
 
   const total = scored.length;
+
+  // Google Places 评分（ADR-004）：对初排前 GOOGLE_ENRICH_N 家补评分，
+  // 用真实评分重算「人气」项后**重排**（进排序才公平，见 roadmap「打分调优」）。
+  // 更靠后的候选不补，也进不了前几批。
+  const google = createGoogle({
+    key: opts.env?.GOOGLE_PLACES_API_KEY,
+    fetchImpl: opts.googleFetch,
+  });
+  if (google.enabled && scored.length) {
+    const head = scored.slice(0, GOOGLE_ENRICH_N);
+    const ratings = await google.ratingsFor(
+      head.map((s) => ({
+        id: s.result.id,
+        name: s.result.name,
+        lat: s.result.lat,
+        lng: s.result.lng,
+      })),
+    );
+    let hit = 0;
+    for (const s of head) {
+      const g = ratings.get(s.result.id);
+      if (g) {
+        s.result.rating = g.rating;
+        s.result.userRatingCount = g.userRatingCount;
+        s.result.ratingSource = "google";
+        s.result.googleMapsUri = g.mapsUri || null;
+        applyGoogleRating(s, g);
+        hit++;
+      }
+    }
+    // 只在补过评分的这批内部重排，尾部保持原序 —— 不让没补评分的候选
+    // （合成人气分偏高）借重排挤进前排。
+    head.sort((a, b) => b.score - a.score);
+    scored.splice(0, head.length, ...head);
+    notes.push(
+      `已用 Google 评分重排前 ${head.length} 家（${hit} 家匹配到），其余显示合成人气分`,
+    );
+  }
+
   const batches = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const batch = Math.min(Math.max(0, req.batch ?? 0), batches - 1);
   const results = scored
     .slice(batch * PAGE_SIZE, batch * PAGE_SIZE + PAGE_SIZE)
     .map((s) => s.result);
-
-  // Google Places 评分（ADR-004）：只对返回的这一批补充，控制调用量
-  const google = createGoogle({
-    key: opts.env?.GOOGLE_PLACES_API_KEY,
-    fetchImpl: opts.googleFetch,
-  });
-  if (google.enabled && results.length) {
-    const ratings = await google.ratingsFor(
-      results.map((r) => ({ id: r.id, name: r.name, lat: r.lat, lng: r.lng })),
-    );
-    let hit = 0;
-    for (const r of results) {
-      const g = ratings.get(r.id);
-      if (g) {
-        r.rating = g.rating;
-        r.userRatingCount = g.userRatingCount;
-        r.ratingSource = "google";
-        r.googleMapsUri = g.mapsUri || null;
-        hit++;
-      }
-    }
-    if (hit < results.length) {
-      notes.push(
-        `${results.length - hit} 家未匹配到 Google 评分，显示合成人气分`,
-      );
-    }
-  }
 
   return {
     request: { ...req, datetime: when.toISOString() },

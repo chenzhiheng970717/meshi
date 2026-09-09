@@ -45,6 +45,31 @@ export interface ScoredShop {
   score: number;
 }
 
+/** Google 评分 → 人气分 0..1。3.0 星 → 0，4.5 星 → 满；评论数取对数拉平。 */
+export function ratingToPopularity(rating: number, count: number): number {
+  const quality = (rating - 3.0) / 1.5;
+  const volume = Math.min(1, Math.log10(count + 1) / 3.5);
+  return clamp01(0.6 * quality + 0.4 * volume);
+}
+
+/** 用 Google 评分重算一个候选的人气项和总分（原地）。 */
+export function applyGoogleRating(
+  s: ScoredShop,
+  rating: { rating: number; userRatingCount: number },
+): void {
+  const pop = ratingToPopularity(rating.rating, rating.userRatingCount);
+  const bd = s.result.scoreBreakdown;
+  bd.popularity = Number(pop.toFixed(3));
+  s.result.popularity = pop;
+  const score = SCORE_WEIGHTS.distance * bd.distance +
+    SCORE_WEIGHTS.genre * bd.genre +
+    SCORE_WEIGHTS.popularity * bd.popularity +
+    SCORE_WEIGHTS.budget * bd.budget +
+    SCORE_WEIGHTS.scene * bd.scene;
+  s.result.score = Number(score.toFixed(4));
+  s.score = score;
+}
+
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 
 function parseCapacity(v: number | string): number {
