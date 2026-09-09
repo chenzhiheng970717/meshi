@@ -150,6 +150,9 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .rhead h1{font-family:var(--disp);font-size:30px;margin:0;text-transform:uppercase;line-height:1;letter-spacing:.01em}
 .rhead .cnt{font-family:var(--mono);font-size:12px;color:var(--ink-3);padding-bottom:2px}
 .rsum{font-size:13px;color:var(--ink-3);margin:0 0 16px}
+.notes{display:flex;flex-direction:column;gap:5px;margin:0 0 16px}
+.notes span{font-size:11.5px;line-height:1.5;color:var(--gold);background:var(--gold-soft);border:1px solid var(--rule);border-radius:3px;padding:5px 9px}
+.hnote{color:var(--accent);border-color:var(--accent)!important}
 .filters{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--rule)}
 .fbtn{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:7px 12px;border:1px solid var(--rule-2);border-radius:999px;color:var(--ink-2);transition:.13s}
 .fbtn:hover{border-color:var(--ink-3)}
@@ -406,6 +409,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     <section class="results">
       <div class="rhead"><h1 id="rtitle">为你挑出 5 家</h1><span class="cnt" id="rcnt"></span></div>
       <p class="rsum" id="rsum"></p>
+      <div class="notes" id="notes" style="display:none"></div>
       <div class="filters">
         <button class="fbtn" id="f-eaten"><svg class="i"><use href="#i-check"/></svg>排除吃过的</button>
         <button class="fbtn" id="f-liked"><svg class="i"><use href="#i-heart"/></svg>只看喜欢的</button>
@@ -419,10 +423,10 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 
   <footer class="band">
     <div class="band-cols">
-      <div><h5>数据来源</h5><p>ホットペッパー グルメ</p><p class="dim">正式版将在此显示官方署名与 logo</p></div>
-      <div><h5>覆盖范围</h5><p>東京 23 区</p><p class="dim">演示数据 28 家</p></div>
-      <div><h5>排序方式</h5><p>规则打分 · 可解释</p><p class="dim">距离 30 / 口味 25 / 人气 20 / 预算 15 / 场景 10</p></div>
-      <div><h5>版本</h5><p>Prototype v0.2</p><p class="dim">界面评审用</p></div>
+      <div><h5>数据来源</h5><p id="src-name">Powered by ホットペッパーグルメ</p><p class="dim" id="src-note">当前为演示数据；正式版显示官方 logo</p></div>
+      <div><h5>覆盖范围</h5><p>東京 23 区</p><p class="dim">演示数据 24 家</p></div>
+      <div><h5>排序方式</h5><p>服务端规则打分 · 可解释</p><p class="dim">距离 30 / 口味 25 / 人气 20 / 预算 15 / 场景 10</p></div>
+      <div><h5>版本</h5><p>Prototype v0.3 · /search 契约</p><p class="dim">界面评审用</p></div>
     </div>
     <div class="giant">MESHI</div>
   </footer>
@@ -568,6 +572,78 @@ function yen(n){return "¥"+n.toLocaleString("en-US");}
 function cl(x){return Math.max(0,Math.min(1,x));}
 function popOf(s){return cl(.7*((s.rating-3.2)/1.4)+.3*Math.min(1,Math.log10(s.reviews)/3.2));}
 
+/* ---------- 数据源：本地演示 / 远程 /search ----------
+   默认走下面的本地 evaluate()（原型自包含，双击即用）。
+   加 ?api=http://localhost:8787 或在 localStorage 里设 meshi:api，
+   则改调 Edge Function 的 /search 契约（见 docs/contract.md）。 */
+var API_BASE=(function(){
+ try{
+  var q=new URL(location.href).searchParams.get("api");
+  if(q==="off"||q==="0"||q===""){localStorage.removeItem("meshi:api");return null;}
+  if(q){localStorage.setItem("meshi:api",q);}
+  var v=q||localStorage.getItem("meshi:api");
+  return v?v.replace(/\/+$/,""):null;
+ }catch(e){return null;}
+})();
+var lastResp=null;
+
+function buildRequest(){
+ return {
+  origin:{lat:State.origin.lat,lng:State.origin.lng,label:State.addrText},
+  datetime:State.date+"T"+State.time,
+  transport:State.mode, maxMinutes:State.mins, party:State.party,
+  genres:State.genres.slice(), budgetMin:State.bmin, budgetMax:State.bmax,
+  exclude:State.fEaten?markIds("eaten"):[],
+  disliked:markIds("dislike"),
+  batch:State.batch
+ };
+}
+function markIds(kind){return Object.keys(State.marks).filter(function(k){return State.marks[k]===kind;});}
+
+var SMOKE_TO_PROTO={full:"full","partial":"part",none:"none",unknown:"full"};
+function rowFromResult(x){
+ return {
+  s:{id:x.id,name:x.name,g:x.genre.code,lat:x.lat,lng:x.lng,station:x.station,
+     budget:x.budget.mid,cap:x.privateRoom&&x.privateRoom.available?Math.max(State.party,4):State.party,
+     room:x.privateRoom&&x.privateRoom.available?1:0,
+     nonsmoke:SMOKE_TO_PROTO[x.nonSmoking]||"full",course:0,card:x.card?1:0,
+     rating:null,reviews:null,coupon:!!x.coupon,url:x.url,photo:x.photo?x.photo.l:null,
+     hours:x.hours,popularity:x.popularity},
+  d:x.distanceM,t:x.etaMinutes,
+  p:{dist:x.scoreBreakdown.distance,gen:x.scoreBreakdown.genre,pop:x.scoreBreakdown.popularity,
+     bud:x.scoreBreakdown.budget,fit:x.scoreBreakdown.scene},
+  score:x.score,whyText:(x.why||[]).join(" · ")
+ };
+}
+function mapRej(x){return {dist:x.distance,time:x.hours,cap:x.capacity,bud:x.budget,gen:x.genre,dis:x.disliked};}
+
+/* 统一形状：{rows, rej, total, batches, batch, notes, source, sliceLocally} */
+function search(){
+ if(API_BASE){
+  return fetch(API_BASE+"/search",{method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify(buildRequest())})
+   .then(function(r){if(!r.ok)throw new Error("/search "+r.status);return r.json();})
+   .then(function(resp){
+    lastResp=resp;
+    var rows=resp.results.map(rowFromResult);
+    var notes=(resp.notes||[]).slice();
+    // 「只看喜欢的」是纯前端筛选，服务端没有这个概念——对当前批做客户端过滤
+    if(State.fLiked){
+     rows=rows.filter(function(r){return State.marks[r.s.id]==="like";});
+     notes.push("「只看喜欢的」为本地筛选，仅作用于当前批次");
+    }
+    return {rows:rows,rej:mapRej(resp.rejected),
+     total:resp.total,batches:resp.batches,batch:resp.batch,notes:notes,
+     source:resp.source,sliceLocally:false};
+   });
+ }
+ lastResp=null;
+ var r=evaluate();
+ var pages=Math.max(1,Math.ceil(r.rows.length/5));
+ return Promise.resolve({rows:r.rows,rej:r.rej,total:r.rows.length,batches:pages,
+  batch:State.batch,notes:[],source:"local",sliceLocally:true});
+}
+
 /* ---------- 打分 ---------- */
 var W=[{k:"dist",n:"距离",w:.30,c:"var(--accent)"},{k:"gen",n:"口味",w:.25,c:"var(--gold)"},
  {k:"pop",n:"人气",w:.20,c:"var(--green)"},{k:"bud",n:"预算",w:.15,c:"var(--ink-2)"},
@@ -601,7 +677,7 @@ function why(r){
  bits.push('<em>'+m.n+' '+Math.round(r.t)+' 分钟</em>');
  if(r.p.bud>.75) bits.push('人均 '+yen(r.s.budget)+' <em>正好在预算内</em>');
  else if(r.s.budget<(State.bmin+State.bmax)/2) bits.push('人均 '+yen(r.s.budget)+'，比预算省');
- if(r.s.rating>=4.3) bits.push('<em>评分 '+r.s.rating.toFixed(1)+'</em>，'+r.s.reviews+' 条评论');
+ if(r.s.rating!=null && r.s.rating>=4.3) bits.push('<em>评分 '+r.s.rating.toFixed(1)+'</em>，'+r.s.reviews+' 条评论');
  if(r.s.room&&State.party>=4) bits.push('有 '+r.s.cap+' 人包间');
  else if(r.s.cap>=State.party+4) bits.push('位子宽松');
  return bits.join(' · ');
@@ -610,6 +686,32 @@ function stars(v){
  var h='',full=Math.floor(v);
  for(var i=0;i<5;i++) h+='<svg class="i'+(i<full?'':' half')+'"><use href="#i-star"/></svg>';
  return h;
+}
+/* HotPepper 不返回 rating / reviews（ADR-004 未决）。
+   有评分（本地演示数据）就显示星级；没有就显示合成的「人气分」。 */
+function ratingMeta(s){
+ if(s.rating!=null){
+  return '<span class="stars">'+stars(s.rating)+
+   '<b style="color:var(--ink);font-family:var(--mono);font-size:12.5px;margin-left:3px">'+s.rating.toFixed(1)+'</b>'+
+   '<span class="rv">'+ico("chat")+' '+s.reviews+'</span></span>';
+ }
+ var p=Math.round((s.popularity||0)*100);
+ return '<span class="stars" title="HotPepper 无评分，暂用合成人气分（ADR-004 未决）">'+
+  ico("spark")+'<b style="color:var(--ink-2);font-family:var(--mono);font-size:12px;margin-left:2px">人气 '+p+'</b></span>';
+}
+function renderNotes(res){
+ var box=$("notes"); if(!box) return;
+ var msgs=(res.notes||[]).slice();
+ if(res.source && res.source!=="local" && res.source!=="mock") msgs.unshift("数据来源：HotPepper（实时）");
+ box.innerHTML = msgs.length ? msgs.map(function(t){
+  var cls=/营业时间|连不上|请以店家/.test(t)?' class="hnote"':'';
+  return '<span'+cls+'>'+t+'</span>';
+ }).join("") : "";
+ box.style.display = msgs.length ? "" : "none";
+ var sn=$("src-note");
+ if(sn) sn.textContent = res.source==="hotpepper"
+  ? "实时数据 · 基于 Recruit 利用規約"
+  : (res.source==="mock" ? "演示数据（Edge Function 未接入 HotPepper）" : "本地演示数据");
 }
 /* API 的 card 字段只有「利用可 / 利用不可」两个值，拿不到 IC / 扫码，
    所以支付只保留一个「可刷卡」标记。non_smoking 是三态字符串。 */
@@ -628,19 +730,36 @@ function toast(msg,actLabel,actFn){
 function hideToast(){$("toast").classList.remove("on");}
 
 /* ---------- 渲染 ---------- */
-var lastRows=[];
+var renderSeq=0;
 function render(){
- var res=evaluate(); lastRows=res.rows;
- var pages=Math.max(1,Math.ceil(res.rows.length/5));
- if(State.batch>=pages) State.batch=0;
- var page=res.rows.slice(State.batch*5,State.batch*5+5);
+ var seq=++renderSeq;
+ var L=$("list");
+ if(API_BASE) L.setAttribute("aria-busy","true");
+ search().then(function(res){
+  if(seq!==renderSeq) return;           // 丢弃过期的异步结果
+  L.removeAttribute("aria-busy");
+  paint(res);
+ }).catch(function(err){
+  if(seq!==renderSeq) return;
+  L.removeAttribute("aria-busy"); L.innerHTML="";
+  L.appendChild(el("div","empty",ico("search")+
+   '<p>连不上 /search（'+API_BASE+'）。</p>'+
+   '<p class="s">'+String(err.message||err)+'。去掉网址里的 ?api= 可回到本地演示数据。</p>'));
+ });
+}
+
+function paint(res){
+ if(State.batch>=res.batches) State.batch=0;
+ else if(res.source!=="local") State.batch=res.batch;
+ var page=res.sliceLocally ? res.rows.slice(State.batch*5,State.batch*5+5) : res.rows;
 
  $("rtitle").textContent = page.length? "为你挑出 "+page.length+" 家" : "没有合适的店";
- $("rcnt").textContent = res.rows.length>5 ? "共 "+res.rows.length+" 家通过筛选" : "";
+ $("rcnt").textContent = res.total>5 ? "共 "+res.total+" 家通过筛选" : "";
  var m=mode();
  $("rsum").textContent = State.addrText+" 出发 · "+m.n+"最多 "+State.mins+" 分钟 · "+State.party+" 人 · 人均 "+yen(State.bmin)+"–"+yen(State.bmax);
- $("batch").textContent = pages>1 ? "第 "+(State.batch+1)+" / "+pages+" 批" : "";
- $("reroll").style.display = pages>1 ? "" : "none";
+ $("batch").textContent = res.batches>1 ? "第 "+(State.batch+1)+" / "+res.batches+" 批" : "";
+ $("reroll").style.display = res.batches>1 ? "" : "none";
+ renderNotes(res);
 
  var L=$("list"); L.innerHTML="";
  if(!page.length){
@@ -663,7 +782,8 @@ function render(){
   var c=el("div","card"+(rank===1?" best":"")+(picked?" picked":""));
   var pays=(s.card?'<span class="pay">'+ico("card")+'可刷卡</span>':'')+
    '<span class="pay">'+ico("smoke")+SMOKE[s.nonsmoke]+'</span>'+
-   (s.coupon?'<span class="pay" style="color:var(--gold);border-color:var(--gold)">'+ico("star")+'有优惠券</span>':'');
+   (s.coupon?'<span class="pay" style="color:var(--gold);border-color:var(--gold)">'+ico("star")+'有优惠券</span>':'')+
+   (s.hours&&s.hours.disclaimer?'<span class="pay" style="color:var(--accent);border-color:var(--accent)">'+ico("clock")+'营业时间以店家为准</span>':'');
   c.innerHTML=
    '<div class="photo" data-act="open" role="link" tabindex="0">'+art(s.g)+
      '<span class="rk">'+String(rank).padStart(2,"0")+'</span><span class="demo-tag">示例图</span></div>'+
@@ -673,11 +793,10 @@ function render(){
        '<span class="cscore">'+r.score.toFixed(2)+'</span></div>'+
      '<div class="cmeta">'+
        '<span>'+ico("pin")+s.station+'</span>'+
-       '<span class="stars">'+stars(s.rating)+'<b style="color:var(--ink);font-family:var(--mono);font-size:12.5px;margin-left:3px">'+s.rating.toFixed(1)+'</b>'+
-         '<span class="rv">'+ico("chat")+' '+s.reviews+'</span></span>'+
+       ratingMeta(s)+
        '<span class="price">'+yen(s.budget)+' <span style="color:var(--ink-3);font-family:var(--sans);font-size:11.5px">/ 人</span></span>'+
      '</div>'+
-     '<div class="why">'+ico("spark")+'<span>'+why(r)+'</span></div>'+
+     '<div class="why">'+ico("spark")+'<span>'+(r.whyText||why(r))+'</span></div>'+
      '<div class="pays">'+(s.room?'<span class="pay">'+ico("room")+'包间</span>':'')+pays+'</div>'+
      '<div class="cacts">'+
        '<button class="tog'+(mk==="eaten"?" on-eat":"")+'" data-act="eaten">'+ico("check")+'吃过</button>'+
@@ -732,9 +851,17 @@ function openDrawer(r){
  $("dr-name").textContent=s.name;
  $("dr-sub").textContent=g.n+" · "+s.station;
  var oh=function(h){var H=Math.floor(h)%24,M=(h%1)?"30":"00";return (H<10?"0":"")+H+":"+M;};
+ var ratingLine = s.rating!=null
+  ? s.rating.toFixed(1)+' / 5.0 · '+s.reviews+' 条评论'
+  : '合成人气分 '+Math.round((s.popularity||0)*100)+'（HotPepper 无评分，ADR-004 未决）';
+ var hoursLine = s.hours
+  ? ((s.hours.todayLabel||'营业时间见店家页')
+     +(s.hours.lastOrderLabel?'（L.O. '+s.hours.lastOrderLabel+'）':'')
+     +(s.hours.disclaimer?' · 请以店家为准':''))
+  : oh(s.open[0])+' – '+oh(s.open[1])+'（L.O. 提前 1 小时）';
  $("dr-kv").innerHTML=
-  '<dt>评分</dt><dd>'+s.rating.toFixed(1)+' / 5.0 · '+s.reviews+' 条评论</dd>'+
-  '<dt>营业</dt><dd>'+oh(s.open[0])+' – '+oh(s.open[1])+'（L.O. 提前 1 小时）</dd>'+
+  '<dt>评分</dt><dd>'+ratingLine+'</dd>'+
+  '<dt>营业</dt><dd>'+hoursLine+'</dd>'+
   '<dt>人均</dt><dd>'+yen(s.budget)+'</dd>'+
   '<dt>到达</dt><dd>'+m.n+' 约 '+Math.round(r.t)+' 分钟 · 直线 '+(r.d/1000).toFixed(1)+' km</dd>'+
   '<dt>容纳</dt><dd>最多 '+s.cap+' 人'+(s.room?' · 有包间':'')+'</dd>'+
