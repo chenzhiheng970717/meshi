@@ -603,6 +603,13 @@ var API_BASE=null, API_TOKEN="";
  }catch(e){}
 })();
 function apiHeaders(extra){ var h=extra||{}; if(API_TOKEN) h["X-App-Token"]=API_TOKEN; return h; }
+/* 拼接端点。Supabase 是 .../functions/v1/search，子路由是 .../search/geocode；
+   本地 dev-server 是 .../search、.../geocode 平级。API_BASE 以 /search 结尾就按前者。 */
+function endpoint(name){
+ if(!API_BASE) return null;
+ if(/\/search$/.test(API_BASE)) return name ? API_BASE+"/"+name : API_BASE;
+ return name ? API_BASE+"/"+name : API_BASE+"/search";
+}
 var lastResp=null;
 
 function buildRequest(){
@@ -640,7 +647,7 @@ function mapRej(x){return {dist:x.distance,time:x.hours,cap:x.capacity,bud:x.bud
 /* 统一形状：{rows, rej, total, batches, batch, notes, source, sliceLocally} */
 function search(){
  if(API_BASE){
-  return fetch(API_BASE+"/search",{method:"POST",headers:apiHeaders({"content-type":"application/json"}),
+  return fetch(endpoint(""),{method:"POST",headers:apiHeaders({"content-type":"application/json"}),
     body:JSON.stringify(buildRequest())})
    .then(function(r){if(!r.ok)throw new Error("/search "+r.status);return r.json();})
    .then(function(resp){
@@ -934,7 +941,7 @@ function useAddr(a){
 /* 自由文本地址 → 经纬度（Google Geocoding，服务端代理）。仅 ?api= 模式。 */
 function geocodeAddr(raw,btn){
  if(btn) btn.textContent="解析中…";
- fetch(API_BASE+"/geocode?q="+encodeURIComponent(raw),{headers:apiHeaders()})
+ fetch(endpoint("geocode")+"?q="+encodeURIComponent(raw),{headers:apiHeaders()})
   .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
   .then(function(x){
    if(!x.ok){ toast(x.j.error||"解析不出这个地址，换个写法试试"); return; }
