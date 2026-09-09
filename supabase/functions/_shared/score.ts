@@ -56,7 +56,23 @@ function parsePrefix(field: string | undefined): { available: boolean; detail: s
   if (!field) return null;
   const [head, ...rest] = field.split("：");
   const available = /あり|可|有/.test(head) && !/なし|不可|無/.test(head);
-  return { available, detail: rest.join("：").trim() };
+  // detail 是店家自由文本，原样保留（去掉换行和「※…」注意事项），展示交给前端
+  const detail = rest.join("：").replace(/[\r\n]+/g, " ").split("※")[0].trim();
+  return { available, detail };
+}
+
+/**
+ * 卡片上的车站信息。mobile_access 通常是「新宿駅東口 徒歩3分」，
+ * 但有些店塞了一整句广告文案。太长或不含「駅/徒歩/分」就退回 station_name。
+ */
+function cleanStation(shop: RawShop): string {
+  const ma = (shop.mobile_access ?? "").trim();
+  const looksClean = ma.length > 0 && ma.length <= 22 &&
+    /駅|徒歩|分|より|から/.test(ma);
+  if (looksClean) return ma;
+  const st = (shop.station_name ?? "").trim();
+  if (st) return /駅$/.test(st) ? st : st + "駅";
+  return ma.slice(0, 22);
 }
 
 function nonSmokingState(v: string | undefined): ShopResult["nonSmoking"] {
@@ -90,9 +106,16 @@ export function scoreShop(
     return { reject: "budget" };
   }
 
-  if (ctx.genres.length && !ctx.genres.includes(shop.genre?.code)) {
-    return { reject: "genre" };
-  }
+  // 口味不做硬过滤：HotPepper 的 genre 参数本身是宽匹配（会带出「兼营韩餐的
+  // 烤肉店」这类），gather 已按参数拉过。这里只在打分时区分「主分类命中」和
+  // 「通过关联分类命中」。mock 客户端在 gather 里已按 genre.code 严格筛。
+  const genreHit = !ctx.genres.length
+    ? "none"
+    : ctx.genres.includes(shop.genre?.code)
+    ? "primary"
+    : ctx.genres.includes(shop.sub_genre?.code ?? "")
+    ? "sub"
+    : "loose";
 
   // 定休日：close 字段里明确的每周定休直接挡掉（不含「不定休 / 第N週」）
   const targetWeekday = (ctx.when.getDay() + 6) % 7;
@@ -103,8 +126,10 @@ export function scoreShop(
   const oh = evaluateOpen(parsedOpen, ctx.when, ctx.timeMin, LO_MARGIN_MIN);
   // openAtTarget === false 且能确定 → 过滤；"unknown" → 放行并标注
   if (oh.openAtTarget === false) return { reject: "hours" };
+  // 「营业时间以店家为准」只针对营业时间解析可信度，不含定休日。
+  // 不定休（日本很常见，约 1/6 的店）不在这里标红。
   const hoursDisclaimer = oh.openAtTarget === "unknown" ||
-    parsedOpen.status !== "ok" || closeInfo.irregular;
+    parsedOpen.status !== "ok";
 
   // --- 加权打分 ---
   const popularity = synthPopularity(shop);
@@ -115,9 +140,10 @@ export function scoreShop(
   const hasCourse = shop.course === "あり";
   const smoke = nonSmokingState(shop.non_smoking);
 
+  const genreScore = { none: 0.6, primary: 1, sub: 0.9, loose: 0.72 }[genreHit];
   const breakdown = {
     distance: clamp01(1 - eta / Math.max(1, ctx.maxMinutes)),
-    genre: ctx.genres.length ? 1 : 0.6,
+    genre: genreScore,
     popularity,
     budget: bud ? clamp01(1 - Math.abs(bud.mid - reqMid) / reqSpan) : 0.5,
     scene: clamp01(
@@ -138,7 +164,7 @@ export function scoreShop(
     id: shop.id,
     name: shop.name,
     genre: { code: shop.genre?.code ?? "", name: shop.genre?.name ?? "" },
-    station: shop.mobile_access || shop.station_name || "",
+    station: cleanStation(shop),
     access: shop.access ?? "",
     lat: shop.lat,
     lng: shop.lng,
@@ -160,6 +186,8 @@ export function scoreShop(
     url: shop.urls?.pc ?? "",
     card: shop.card === "利用可",
     nonSmoking: smoke,
+    partyCapacity: cap,
+    seats: parseCapacity(shop.capacity),
     privateRoom: room,
     coupon: (shop.coupon_urls?.pc ?? "").length > 0,
     catch: shop.catch ?? "",
@@ -222,13 +250,18 @@ function buildWhy(a: {
   oh: ReturnType<typeof evaluateOpen>;
 }): string[] {
   const bits: string[] = [];
-  bits.push(`${TRANSPORT_LABEL[a.transport]} 约 ${Math.round(a.eta)} 分钟`);
+  const eta = Math.round(a.eta);
+  bits.push(
+    eta < 1
+      ? `${TRANSPORT_LABEL[a.transport]}就到，几乎在门口`
+      : `${TRANSPORT_LABEL[a.transport]} 约 ${eta} 分钟`,
+  );
   if (a.bud) {
     if (a.budgetBreakdown > 0.75) bits.push(`人均 ¥${a.bud.mid} 正好在预算内`);
     else if (a.bud.mid < a.reqMid) bits.push(`人均 ¥${a.bud.mid}，比预算省`);
   }
   if (a.room?.available && a.party >= 4) {
-    bits.push(a.room.detail ? `有包间（${a.room.detail.slice(0, 20)}）` : "有包间");
+    bits.push("有包间");
   } else if (a.cap >= a.party + 4) {
     bits.push("位子宽松");
   }

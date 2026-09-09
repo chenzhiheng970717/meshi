@@ -41,12 +41,16 @@ async function call(params) {
   return json.results.shop ?? [];
 }
 
+const PER_AREA = Math.ceil(TARGET / CENTERS.length) + 4;
 const byId = new Map();
 for (const [name, lat, lng] of CENTERS) {
-  if (byId.size >= TARGET) break;
-  for (const start of [1, 101]) {
+  let added = 0;
+  // 从多页里翻，跨过前面的广告位，格式更杂
+  for (const start of [1, 101, 201]) {
+    if (added >= PER_AREA) break;
     const shops = await call({ lat, lng, range: 3, count: 100, start });
     for (const s of shops) {
+      if (added >= PER_AREA) break;
       if (!byId.has(s.id)) {
         byId.set(s.id, {
           id: s.id,
@@ -56,14 +60,15 @@ for (const [name, lat, lng] of CENTERS) {
           open: s.open ?? "",
           close: s.close ?? "",
         });
+        added++;
       }
     }
     if (shops.length < 100) break;
   }
-  console.log(`${name}: 累计 ${byId.size} 家`);
+  console.log(`${name}: +${added}（累计 ${byId.size}）`);
 }
 
-const rows = [...byId.values()].slice(0, TARGET);
+const rows = [...byId.values()];
 const outDir = fileURLToPath(new URL("../fixtures/", import.meta.url));
 await mkdir(outDir, { recursive: true });
 await writeFile(outDir + "open-strings.json", JSON.stringify(rows, null, 2) + "\n");

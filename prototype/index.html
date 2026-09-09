@@ -457,8 +457,8 @@ function store(k,v){try{ if(v===undefined) return JSON.parse(localStorage.getIte
 /* ---------- 分类 ---------- */
 var GENRES=[
  {c:"G001",n:"居酒屋"},{c:"G004",n:"和食"},{c:"G013",n:"拉面"},{c:"G008",n:"烤肉"},
- {c:"G007",n:"中华"},{c:"G006",n:"意法料理"},{c:"G005",n:"洋食"},{c:"G015",n:"韩国料理"},
- {c:"G009",n:"亚洲菜"},{c:"G016",n:"咖啡甜点"}];
+ {c:"G007",n:"中华"},{c:"G006",n:"意法料理"},{c:"G005",n:"洋食"},{c:"G017",n:"韩国料理"},
+ {c:"G009",n:"亚洲菜"},{c:"G014",n:"咖啡甜点"}];
 var GMAP={}; GENRES.forEach(function(g){GMAP[g.c]=g;});
 
 /* ---------- 食物插画（照片占位） ---------- */
@@ -470,9 +470,9 @@ var ART={
  G007:'<rect width="100" height="100" fill="#E3D3C6"/><ellipse cx="50" cy="80" rx="30" ry="5" fill="#BCA492"/><path d="M14 44h72c0 20-16 34-36 34S14 64 14 44z" fill="#4A3830"/><ellipse cx="50" cy="44" rx="36" ry="7" fill="#6B554A"/><path d="M34 44c6-4 12-4 18 0s12 4 16 0" stroke="#C98A3C" stroke-width="4" fill="none"/><path d="M86 46h10v6H84" stroke="#4A3830" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M38 24c3 5-3 7 0 12M58 22c3 5-3 7 0 12" stroke="#D8CBBE" stroke-width="3" fill="none" stroke-linecap="round"/>',
  G006:'<rect width="100" height="100" fill="#E6E0CE"/><circle cx="50" cy="56" r="34" fill="#F8F4EA"/><circle cx="50" cy="56" r="25" fill="#EFE7D6"/><path d="M34 56c4-8 12-10 16-4s14 6 16-2" stroke="#C98A3C" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M36 62c5-6 12-6 16-1s12 5 14-1" stroke="#D9A44F" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="4" fill="#C0431D"/><circle cx="60" cy="60" r="4" fill="#C0431D"/><path d="M50 44c2-3 5-3 6 0" stroke="#456638" stroke-width="3" fill="none" stroke-linecap="round"/>',
  G005:'<rect width="100" height="100" fill="#EADCC4"/><circle cx="50" cy="56" r="33" fill="#FAF6EC"/><path d="M28 58c0-12 10-20 22-20s22 8 22 20-10 16-22 16-22-4-22-16z" fill="#E8B33C"/><path d="M36 54c6-6 16-6 22 0" stroke="#F2D48A" stroke-width="3" fill="none"/><path d="M40 68c8 4 16 4 22-1" stroke="#C0431D" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M62 44c4-2 8 0 8 4" stroke="#456638" stroke-width="3" fill="none" stroke-linecap="round"/>',
- G015:'<rect width="100" height="100" fill="#DCC9BC"/><ellipse cx="50" cy="82" rx="28" ry="5" fill="#BBA294"/><path d="M18 46h64c0 19-14 32-32 32S18 65 18 46z" fill="#3A2C25"/><ellipse cx="50" cy="46" rx="32" ry="6" fill="#C0431D"/><path d="M34 46c6 4 14 4 20 0s10 3 14 0" stroke="#8E3315" stroke-width="4" fill="none"/><path d="M12 52h-6M88 52h6" stroke="#3A2C25" stroke-width="5" stroke-linecap="round"/><path d="M36 26c3 5-3 7 0 12M58 24c3 5-3 7 0 12" stroke="#D6C4B6" stroke-width="3" fill="none" stroke-linecap="round"/>',
+ G017:'<rect width="100" height="100" fill="#DCC9BC"/><ellipse cx="50" cy="82" rx="28" ry="5" fill="#BBA294"/><path d="M18 46h64c0 19-14 32-32 32S18 65 18 46z" fill="#3A2C25"/><ellipse cx="50" cy="46" rx="32" ry="6" fill="#C0431D"/><path d="M34 46c6 4 14 4 20 0s10 3 14 0" stroke="#8E3315" stroke-width="4" fill="none"/><path d="M12 52h-6M88 52h6" stroke="#3A2C25" stroke-width="5" stroke-linecap="round"/><path d="M36 26c3 5-3 7 0 12M58 24c3 5-3 7 0 12" stroke="#D6C4B6" stroke-width="3" fill="none" stroke-linecap="round"/>',
  G009:'<rect width="100" height="100" fill="#E0E3CE"/><ellipse cx="50" cy="80" rx="30" ry="5" fill="#B7BCA0"/><path d="M16 48h68c0 19-15 32-34 32S16 67 16 48z" fill="#F5F1E2"/><ellipse cx="50" cy="48" rx="34" ry="6" fill="#DCD6C0"/><path d="M32 52c6-4 12 2 18-2s12 4 18 0" stroke="#456638" stroke-width="4" fill="none"/><path d="M40 60c4 4 12 4 18 0" stroke="#C0431D" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M66 30c8 2 12 8 10 14" stroke="#C0431D" stroke-width="4" fill="none" stroke-linecap="round"/>',
- G016:'<rect width="100" height="100" fill="#E7DACB"/><ellipse cx="48" cy="82" rx="30" ry="5" fill="#C2AF9E"/><path d="M22 44h52v16c0 12-10 20-26 20s-26-8-26-20z" fill="#FAF6EC"/><ellipse cx="48" cy="44" rx="26" ry="6" fill="#8A5A32"/><path d="M74 50h8a7 7 0 0 1 0 14h-8" stroke="#FAF6EC" stroke-width="5" fill="none"/><path d="M38 24c3 6-3 8 0 14M56 22c3 6-3 8 0 14" stroke="#CDBBA9" stroke-width="3" fill="none" stroke-linecap="round"/>'
+ G014:'<rect width="100" height="100" fill="#E7DACB"/><ellipse cx="48" cy="82" rx="30" ry="5" fill="#C2AF9E"/><path d="M22 44h52v16c0 12-10 20-26 20s-26-8-26-20z" fill="#FAF6EC"/><ellipse cx="48" cy="44" rx="26" ry="6" fill="#8A5A32"/><path d="M74 50h8a7 7 0 0 1 0 14h-8" stroke="#FAF6EC" stroke-width="5" fill="none"/><path d="M38 24c3 6-3 8 0 14M56 22c3 6-3 8 0 14" stroke="#CDBBA9" stroke-width="3" fill="none" stroke-linecap="round"/>'
 };
 function art(g){return '<svg class="food" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">'+(ART[g]||ART.G004)+'</svg>';}
 
@@ -528,10 +528,10 @@ var SHOPS=[
  S("a7","麻婆専門 川辺","G007",35.6934,139.7008,"新宿駅 東口 徒歩5分",2200,6,0,"full",0,0,4.2,671,11,22,1),
  S("a8","焼肉 白樺","G008",35.6849,139.7015,"新宿駅 南口 徒歩8分",6000,14,1,"full",1,1,4.1,912,17,23,1),
  S("a9","立ち飲み まるやま","G001",35.6912,139.7001,"新宿駅 西口 徒歩2分",1800,5,0,"part",0,0,3.9,244,15,23.5,0),
- S("a10","カフェ 木洩れ日","G016",35.6889,139.7024,"新宿駅 東口 徒歩2分",1400,4,0,"full",0,1,4.0,455,8,20,1),
+ S("a10","カフェ 木洩れ日","G014",35.6889,139.7024,"新宿駅 東口 徒歩2分",1400,4,0,"full",0,1,4.0,455,8,20,1),
  S("a11","タイ屋台 バーンチャン","G009",35.6957,139.7043,"新宿三丁目駅 徒歩6分",2400,8,0,"full",0,0,4.2,289,11,23,1),
  S("b1","ビストロ・ラルドワーズ","G006",35.6601,139.6989,"渋谷駅 徒歩6分",5500,8,1,"full",1,1,4.4,507,18,23,1),
- S("b2","韓国食堂 ハヌル","G015",35.6624,139.7043,"渋谷駅 徒歩9分",3200,10,0,"part",1,0,3.7,633,11,23,1),
+ S("b2","韓国食堂 ハヌル","G017",35.6624,139.7043,"渋谷駅 徒歩9分",3200,10,0,"part",1,0,3.7,633,11,23,1),
  S("b3","焼き餃子 龍門","G007",35.6572,139.6982,"渋谷駅 徒歩4分",1600,6,0,"full",0,0,4.3,1120,11,23,0),
  S("b4","炉端焼き 潮風","G001",35.6612,139.7031,"渋谷駅 徒歩7分",4200,12,1,"full",1,1,4.0,394,17,24,1),
  S("c1","天ぷら 松乃木","G004",35.6797,139.7648,"東京駅 八重洲 徒歩4分",8000,6,1,"full",1,1,4.4,278,11.5,21.5,1),
@@ -543,7 +543,7 @@ var SHOPS=[
  S("e1","ワインバー ソラーレ","G006",35.6470,139.7085,"恵比寿駅 徒歩3分",6500,6,0,"full",1,1,4.5,331,18,24,1),
  S("e2","居酒屋 なごみ","G001",35.6452,139.7112,"恵比寿駅 徒歩5分",3800,10,1,"full",1,1,4.0,476,17,23.5,1),
  S("f1","スパイス食堂 マハラ","G009",35.6437,139.6981,"中目黒駅 徒歩3分",2600,6,0,"full",0,0,4.2,352,11,22,1),
- S("f2","焙煎所 くろねこ","G016",35.6449,139.7005,"中目黒駅 徒歩4分",1200,4,0,"full",0,1,4.4,708,8,19,1),
+ S("f2","焙煎所 くろねこ","G014",35.6449,139.7005,"中目黒駅 徒歩4分",1200,4,0,"full",0,1,4.4,708,8,19,1),
  S("g1","鉄板焼 銀座八十八","G005",35.6708,139.7649,"銀座駅 徒歩3分",14000,8,1,"full",1,1,4.6,164,17.5,22,0),
  S("g2","蕎麦 銀座土肥","G004",35.6725,139.7671,"銀座駅 徒歩5分",3400,5,0,"full",0,1,4.1,297,11,21,0),
  S("h1","焼き鳥 六本木炭火","G001",35.6633,139.7302,"六本木駅 徒歩4分",5000,12,1,"full",1,1,4.2,545,17,25,1)
@@ -604,8 +604,8 @@ var SMOKE_TO_PROTO={full:"full","partial":"part",none:"none",unknown:"full"};
 function rowFromResult(x){
  return {
   s:{id:x.id,name:x.name,g:x.genre.code,lat:x.lat,lng:x.lng,station:x.station,
-     budget:x.budget.mid,cap:x.privateRoom&&x.privateRoom.available?Math.max(State.party,4):State.party,
-     room:x.privateRoom&&x.privateRoom.available?1:0,
+     budget:x.budget.mid,cap:x.partyCapacity||x.seats||0,
+     room:x.privateRoom&&x.privateRoom.available?1:0,roomDetail:x.privateRoom?x.privateRoom.detail:"",
      nonsmoke:SMOKE_TO_PROTO[x.nonSmoking]||"full",course:0,card:x.card?1:0,
      rating:null,reviews:null,coupon:!!x.coupon,url:x.url,photo:x.photo?x.photo.l:null,
      gName:x.genre.name,hours:x.hours,popularity:x.popularity},
@@ -863,8 +863,8 @@ function openDrawer(r){
   '<dt>评分</dt><dd>'+ratingLine+'</dd>'+
   '<dt>营业</dt><dd>'+hoursLine+'</dd>'+
   '<dt>人均</dt><dd>'+yen(s.budget)+'</dd>'+
-  '<dt>到达</dt><dd>'+m.n+' 约 '+Math.round(r.t)+' 分钟 · 直线 '+(r.d/1000).toFixed(1)+' km</dd>'+
-  '<dt>容纳</dt><dd>最多 '+s.cap+' 人'+(s.room?' · 有包间':'')+'</dd>'+
+  '<dt>到达</dt><dd>'+(Math.round(r.t)<1?m.n+'就到，几乎在门口':m.n+' 约 '+Math.round(r.t)+' 分钟')+' · 直线 '+(r.d<1000?r.d+' m':(r.d/1000).toFixed(1)+' km')+'</dd>'+
+  '<dt>容纳</dt><dd>'+(s.cap?'最多 '+s.cap+' 人':'人数未标注')+(s.room?' · 有包间'+(s.roomDetail?'：'+s.roomDetail:''):'')+'</dd>'+
   '<dt>支付</dt><dd>'+(s.card?'可刷卡':'仅现金')+' · '+SMOKE[s.nonsmoke]+(s.coupon?' · 有优惠券':'')+'</dd>';
  $("dr-link").href=shopUrl(s);
  $("dr-scores").innerHTML=W.map(function(x){

@@ -55,6 +55,10 @@ export interface ShopResult {
   url: string;
   card: boolean;
   nonSmoking: "full" | "partial" | "none" | "unknown";
+  /** party_capacity：宴会最大人数，0 表示无数据 */
+  partyCapacity: number;
+  /** capacity：总席数（和 party_capacity 不是一回事） */
+  seats: number;
   privateRoom: { available: boolean; detail: string } | null;
   coupon: boolean;
   catch: string;
