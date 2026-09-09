@@ -1,0 +1,35 @@
+# === 凭据：绝对不能进仓库 ===
+# API Key 一旦进了 git 历史，删掉文件也没用——历史里还在。
+# 真泄漏了只能去 Recruit / Supabase 后台重新生成。
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+.supabase/
+
+# === 依赖与构建产物 ===
+node_modules/
+dist/
+build/
+.vite/
+.turbo/
+*.tsbuildinfo
+
+# === 日志与缓存 ===
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.cache/
+coverage/
+
+# === 系统与编辑器 ===
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~
