@@ -587,15 +587,22 @@ function popOf(s){return cl(.7*((s.rating-3.2)/1.4)+.3*Math.min(1,Math.log10(s.r
    默认走下面的本地 evaluate()（原型自包含，双击即用）。
    加 ?api=http://localhost:8787 或在 localStorage 里设 meshi:api，
    则改调 Edge Function 的 /search 契约（见 docs/contract.md）。 */
-var API_BASE=(function(){
+var API_BASE=null, API_TOKEN="";
+(function(){
  try{
-  var q=new URL(location.href).searchParams.get("api");
-  if(q==="off"||q==="0"||q===""){localStorage.removeItem("meshi:api");return null;}
-  if(q){localStorage.setItem("meshi:api",q);}
+  var sp=new URL(location.href).searchParams;
+  var q=sp.get("api"), tk=sp.get("token");
+  if(q==="off"||q==="0"||q===""){localStorage.removeItem("meshi:api");localStorage.removeItem("meshi:token");return;}
+  if(q) localStorage.setItem("meshi:api",q);
+  if(tk!=null) localStorage.setItem("meshi:token",tk);
   var v=q||localStorage.getItem("meshi:api");
-  return v?v.replace(/\/+$/,""):null;
- }catch(e){return null;}
+  API_BASE=v?v.replace(/\/+$/,""):null;
+  API_TOKEN=localStorage.getItem("meshi:token")||"";
+  // 把 token 从地址栏擦掉，别留在浏览器历史 / 分享链接里
+  if(tk!=null && history.replaceState){ sp.delete("token"); history.replaceState(null,"", location.pathname+(sp.toString()?"?"+sp:"")); }
+ }catch(e){}
 })();
+function apiHeaders(extra){ var h=extra||{}; if(API_TOKEN) h["X-App-Token"]=API_TOKEN; return h; }
 var lastResp=null;
 
 function buildRequest(){
@@ -633,7 +640,7 @@ function mapRej(x){return {dist:x.distance,time:x.hours,cap:x.capacity,bud:x.bud
 /* 统一形状：{rows, rej, total, batches, batch, notes, source, sliceLocally} */
 function search(){
  if(API_BASE){
-  return fetch(API_BASE+"/search",{method:"POST",headers:{"content-type":"application/json"},
+  return fetch(API_BASE+"/search",{method:"POST",headers:apiHeaders({"content-type":"application/json"}),
     body:JSON.stringify(buildRequest())})
    .then(function(r){if(!r.ok)throw new Error("/search "+r.status);return r.json();})
    .then(function(resp){
@@ -927,7 +934,7 @@ function useAddr(a){
 /* 自由文本地址 → 经纬度（Google Geocoding，服务端代理）。仅 ?api= 模式。 */
 function geocodeAddr(raw,btn){
  if(btn) btn.textContent="解析中…";
- fetch(API_BASE+"/geocode?q="+encodeURIComponent(raw))
+ fetch(API_BASE+"/geocode?q="+encodeURIComponent(raw),{headers:apiHeaders()})
   .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
   .then(function(x){
    if(!x.ok){ toast(x.j.error||"解析不出这个地址，换个写法试试"); return; }
