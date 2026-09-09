@@ -1,0 +1,935 @@
+<title>MESHI 东京选店</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Noto+Sans+SC:wght@400;500;700;900&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F4ECDF; --surface:#FCF8F1; --sunk:#EBE0CE;
+  --ink:#2B1F1A; --ink-2:#6A5850; --ink-3:#9C8A7F;
+  --rule:#DDD1BE; --rule-2:#C5B6A2;
+  --accent:#C0431D; --accent-soft:#F7E0D6; --accent-ink:#8E3315;
+  --gold:#9C6D18; --gold-soft:#F3E7CC;
+  --green:#456638; --green-soft:#E2EBDB;
+  --band:#2B1F1A; --band-ink:#F4ECDF; --band-ink-2:#A8968B; --band-rule:#463630;
+  --shadow:0 1px 2px rgba(43,31,26,.05), 0 10px 28px -20px rgba(43,31,26,.45);
+  --lift:0 3px 8px rgba(43,31,26,.08), 0 22px 50px -28px rgba(43,31,26,.6);
+  --sans:"Noto Sans SC","PingFang SC","Hiragino Sans",system-ui,sans-serif;
+  --disp:"Anton","Noto Sans SC",system-ui,sans-serif;
+  --mono:"DM Mono","SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#171110; --surface:#211A17; --sunk:#2B221D;
+    --ink:#F3E9DB; --ink-2:#C2B1A4; --ink-3:#8C7A6F;
+    --rule:#342A24; --rule-2:#4A3B32;
+    --accent:#EE7549; --accent-soft:#39201A; --accent-ink:#F5A483;
+    --gold:#D6A54F; --gold-soft:#332714;
+    --green:#89AF74; --green-soft:#1E2A18;
+    --band:#0F0B0A; --band-ink:#F3E9DB; --band-ink-2:#8C7A6F; --band-rule:#2A211C;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 28px -20px rgba(0,0,0,.95);
+    --lift:0 3px 8px rgba(0,0,0,.5), 0 22px 50px -28px rgba(0,0,0,1);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#171110; --surface:#211A17; --sunk:#2B221D;
+  --ink:#F3E9DB; --ink-2:#C2B1A4; --ink-3:#8C7A6F;
+  --rule:#342A24; --rule-2:#4A3B32;
+  --accent:#EE7549; --accent-soft:#39201A; --accent-ink:#F5A483;
+  --gold:#D6A54F; --gold-soft:#332714;
+  --green:#89AF74; --green-soft:#1E2A18;
+  --band:#0F0B0A; --band-ink:#F3E9DB; --band-ink-2:#8C7A6F; --band-rule:#2A211C;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 28px -20px rgba(0,0,0,.95);
+  --lift:0 3px 8px rgba(0,0,0,.5), 0 22px 50px -28px rgba(0,0,0,1);
+}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none;padding:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:-.13em}
+
+.lbl{font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);display:flex;align-items:center;gap:6px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ===== demo strip ===== */
+.demo{background:var(--band);color:var(--band-ink-2);font-size:11px;font-weight:700;letter-spacing:.13em;text-align:center;padding:7px 14px}
+
+/* ===== brand ===== */
+.wordmark{font-family:var(--disp);letter-spacing:.005em;line-height:.9;color:var(--ink);text-transform:uppercase}
+.wordmark sup{font-size:.38em;vertical-align:super;font-family:var(--sans);font-weight:700}
+
+/* ===== login ===== */
+.login{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 32px)}
+.login.off{display:none}
+.login-art{background:var(--band);color:var(--band-ink);padding:34px 38px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.login-art .wordmark{color:var(--band-ink);font-size:26px}
+.art-stage{flex:1;display:flex;align-items:center;justify-content:center;padding:16px 0}
+.art-stage svg{width:min(100%,340px);height:auto}
+.login-art h2{font-family:var(--disp);font-size:clamp(46px,7vw,78px);line-height:.86;margin:0;text-transform:uppercase;color:var(--band-ink)}
+.login-art p{color:var(--band-ink-2);font-size:14px;max-width:34ch;margin:12px 0 0;font-weight:400}
+.login-form{background:var(--surface);padding:44px 40px;display:flex;align-items:center}
+.form-inner{width:100%;max-width:380px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.form-inner h3{font-family:var(--disp);font-size:34px;margin:0;text-transform:uppercase;letter-spacing:.01em;line-height:1}
+.field{display:flex;flex-direction:column;gap:7px}
+.input{width:100%;background:var(--sunk);border:1px solid transparent;border-radius:4px;padding:12px 13px;font-size:15px;transition:.14s}
+.input:focus{border-color:var(--accent);background:var(--surface);outline:none}
+.input::placeholder{color:var(--ink-3)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--band);color:var(--band-ink);border-radius:4px;padding:13px 18px;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;width:100%;transition:.14s}
+.btn:hover{background:var(--accent);color:#FFF6EE}
+.btn.ghost{background:none;color:var(--ink-2);border:1px solid var(--rule-2)}
+.btn.ghost:hover{background:var(--sunk);color:var(--ink);border-color:var(--rule-2)}
+.btn.sm{padding:9px 14px;font-size:11px;width:auto}
+.btn.link{background:none;color:var(--accent);width:auto;padding:2px 0;font-size:12.5px;letter-spacing:.04em;text-transform:none;font-weight:500}
+.btn.link:hover{background:none;color:var(--accent);text-decoration:underline}
+.hint{font-size:12.5px;color:var(--ink-3);margin:0;line-height:1.6}
+.otp .input{text-align:center;font-family:var(--mono);font-size:22px;letter-spacing:.35em}
+
+/* ===== app shell ===== */
+.app{display:none;flex-direction:column;min-height:calc(100vh - 32px)}
+.app.on{display:flex}
+.topbar{display:flex;align-items:center;gap:16px;padding:13px 24px;background:var(--surface);border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:30}
+.topbar .wordmark{font-size:21px}
+.topbar .sp{flex:1}
+.nav{display:flex;gap:18px}
+.nav span{font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
+.nav span.on{color:var(--ink)}
+.acct{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2);max-width:34vw}
+.acct .em{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.main{display:grid;grid-template-columns:344px 1fr;flex:1;align-items:start}
+
+/* ===== panel ===== */
+.panel{background:var(--surface);border-right:1px solid var(--rule);padding:20px;display:flex;flex-direction:column;gap:19px;position:sticky;top:55px;max-height:calc(100vh - 55px);overflow-y:auto}
+.grp{display:flex;flex-direction:column;gap:9px}
+.grp-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.grp-head .v{font-family:var(--mono);font-size:11.5px;color:var(--accent)}
+
+.savedrow{display:flex;flex-wrap:wrap;gap:5px}
+.saved{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:4px 8px;border-radius:3px;background:var(--gold-soft);color:var(--gold);border:1px solid transparent}
+.saved b{font-weight:500}
+.saved button{color:var(--gold);opacity:.6;font-size:13px;line-height:1}
+.saved button:hover{opacity:1}
+.ac-wrap{position:relative}
+.ac-wrap .input{padding-right:38px}
+.ac-star{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:24px;height:24px;display:grid;place-items:center;color:var(--ink-3);font-size:15px}
+.ac-star:hover,.ac-star.on{color:var(--gold)}
+.ac-list{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--rule-2);border-radius:4px;box-shadow:var(--lift);z-index:25;overflow:hidden;display:none}
+.ac-list.on{display:block}
+.ac-list button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:9px 12px;font-size:14px;color:var(--ink-2);border-bottom:1px solid var(--rule)}
+.ac-list button:last-child{border-bottom:none}
+.ac-list button:hover{background:var(--sunk);color:var(--ink)}
+.ac-list button .sub{margin-left:auto;font-size:11px;color:var(--ink-3)}
+
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:12.5px;padding:6px 11px;border:1px solid var(--rule-2);border-radius:3px;color:var(--ink-2);background:var(--surface);transition:.13s;line-height:1.35}
+.chip:hover{border-color:var(--ink-3)}
+.chip.on{background:var(--band);border-color:var(--band);color:var(--band-ink);font-weight:500}
+
+.seg{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--rule-2);border-radius:4px;overflow:hidden}
+.seg button{padding:9px 3px;font-size:11.5px;color:var(--ink-2);border-right:1px solid var(--rule-2);display:flex;flex-direction:column;align-items:center;gap:3px;transition:.13s}
+.seg button:last-child{border-right:none}
+.seg button svg{width:16px;height:16px}
+.seg button.on{background:var(--accent-soft);color:var(--accent-ink);font-weight:700}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.budget-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end}
+.bdash{font-family:var(--mono);font-size:16px;color:var(--ink-3);padding-bottom:11px}
+select.input{appearance:none}
+input[type=date].input,input[type=time].input{font-family:var(--mono);font-size:14px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--rule-2);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);border:3px solid var(--surface);box-shadow:0 0 0 1px var(--rule-2);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);border:3px solid var(--surface);cursor:pointer}
+.ends{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.reach{background:var(--accent-soft);color:var(--accent-ink);border-radius:4px;padding:9px 12px;font-size:12.5px;display:flex;align-items:center;gap:7px}
+.reach b{font-family:var(--mono);font-weight:500}
+.stepper{display:flex;align-items:center;border:1px solid var(--rule-2);border-radius:4px;width:fit-content;overflow:hidden}
+.stepper button{width:38px;height:36px;font-size:17px;color:var(--ink-2)}
+.stepper button:hover{background:var(--sunk)}
+.stepper .n{width:54px;text-align:center;font-family:var(--mono);font-size:15px;border-left:1px solid var(--rule-2);border-right:1px solid var(--rule-2);height:36px;line-height:36px}
+
+/* ===== results ===== */
+.results{padding:22px 26px 0;min-width:0;display:flex;flex-direction:column}
+.rhead{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.rhead h1{font-family:var(--disp);font-size:30px;margin:0;text-transform:uppercase;line-height:1;letter-spacing:.01em}
+.rhead .cnt{font-family:var(--mono);font-size:12px;color:var(--ink-3);padding-bottom:2px}
+.rsum{font-size:13px;color:var(--ink-3);margin:0 0 16px}
+.filters{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--rule)}
+.fbtn{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:7px 12px;border:1px solid var(--rule-2);border-radius:999px;color:var(--ink-2);transition:.13s}
+.fbtn:hover{border-color:var(--ink-3)}
+.fbtn.on{background:var(--green-soft);border-color:transparent;color:var(--green);font-weight:500}
+.fbtn svg{width:14px;height:14px}
+.fspace{flex:1}
+.batch{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+
+.list{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;overflow:hidden;display:grid;grid-template-columns:132px 1fr;transition:.16s}
+.card:hover{box-shadow:var(--shadow);border-color:var(--rule-2)}
+.card.best{border-color:var(--accent)}
+.card.picked{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft), var(--shadow);background:linear-gradient(var(--accent-soft),var(--accent-soft)) top/100% 3px no-repeat, var(--surface)}
+.card.picked .cbody{background:linear-gradient(90deg,var(--accent-soft) 0%,transparent 62%)}
+.card.picked .cname{color:var(--accent-ink)}
+.pickmark{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;letter-spacing:.11em;padding:2px 7px;border-radius:2px;background:var(--accent);color:#FFF6EE}
+.photo .demo-tag{position:absolute;right:6px;bottom:6px;font-size:9.5px;letter-spacing:.08em;color:var(--band-ink);background:rgba(43,31,26,.6);padding:1px 5px;border-radius:2px}
+.cname .lk{opacity:0;transition:.13s;color:var(--ink-3);margin-left:5px}
+.card:hover .cname .lk{opacity:1}
+.photo{background:var(--sunk);position:relative;display:block;border-right:1px solid var(--rule);min-height:132px}
+.photo svg{position:absolute;inset:0;width:100%;height:100%}
+.photo .rk{position:absolute;left:8px;top:7px;font-family:var(--mono);font-size:10.5px;color:var(--band-ink);background:rgba(43,31,26,.72);padding:2px 6px;border-radius:2px;letter-spacing:.05em}
+.cbody{padding:13px 15px;display:flex;flex-direction:column;gap:9px;min-width:0}
+.crow1{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.cname{font-size:17px;font-weight:700;letter-spacing:.01em;text-align:left}
+.gtag{font-size:11px;font-weight:700;letter-spacing:.1em;padding:2px 7px;border-radius:2px;background:var(--sunk);color:var(--ink-2)}
+.cscore{margin-left:auto;font-family:var(--mono);font-size:13px;color:var(--accent)}
+.cmeta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--ink-3);align-items:center}
+.cmeta span{display:inline-flex;align-items:center;gap:5px}
+.cmeta b{color:var(--ink-2);font-weight:500}
+.stars{display:inline-flex;align-items:center;gap:3px;color:var(--gold)}
+.stars svg{width:12px;height:12px;fill:currentColor;stroke:none}
+.stars svg.half{opacity:.4}
+.stars .rv{color:var(--ink-3);font-family:var(--mono);font-size:11.5px;margin-left:2px}
+.price{font-family:var(--mono);color:var(--ink);font-size:13px;font-weight:500}
+.why{font-size:13px;color:var(--ink-2);line-height:1.55;background:var(--sunk);border-radius:4px;padding:7px 10px;display:flex;gap:7px;align-items:flex-start}
+.why svg{width:14px;height:14px;color:var(--accent);margin-top:3px}
+.why em{font-style:normal;color:var(--accent-ink);font-weight:500}
+.pays{display:flex;gap:5px;flex-wrap:wrap}
+.pay{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--ink-3);border:1px solid var(--rule);border-radius:2px;padding:2px 6px}
+.pay svg{width:12px;height:12px}
+.cacts{display:flex;gap:6px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--rule);padding-top:10px;margin-top:1px}
+.tog{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:6px 10px;border:1px solid var(--rule-2);border-radius:999px;color:var(--ink-3);transition:.13s}
+.tog:hover{border-color:var(--ink-3);color:var(--ink-2)}
+.tog svg{width:13px;height:13px}
+.tog.on-eat{background:var(--sunk);border-color:transparent;color:var(--ink-2);font-weight:500}
+.tog.on-like{background:var(--green-soft);border-color:transparent;color:var(--green);font-weight:500}
+.tog.on-like svg{fill:currentColor;stroke:none}
+.tog.on-dis{background:var(--accent-soft);border-color:transparent;color:var(--accent-ink);font-weight:500}
+.pick{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.08em;padding:8px 15px;border-radius:999px;background:var(--band);color:var(--band-ink);transition:.14s}
+.pick:hover{background:var(--accent);color:#FFF6EE}
+.pick.on{background:var(--sunk);color:var(--ink-3);cursor:pointer}
+.pick.on:hover{background:var(--sunk);color:var(--ink-2)}
+.pick svg{width:13px;height:13px}
+.detail{font-size:12px;color:var(--ink-3);text-decoration:underline;text-underline-offset:3px}
+.detail:hover{color:var(--accent)}
+
+.more{display:flex;justify-content:center;padding:22px 0 8px}
+.empty{border:1px dashed var(--rule-2);border-radius:6px;padding:40px 26px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;background:var(--surface)}
+.empty svg{width:34px;height:34px;color:var(--ink-3);opacity:.55;stroke-width:1.3}
+.empty p{margin:0;color:var(--ink-2);font-size:14.5px;max-width:40ch}
+.empty .s{font-size:13px;color:var(--ink-3)}
+
+/* ===== footer band ===== */
+.band{background:var(--band);color:var(--band-ink-2);margin-top:44px;padding:32px 26px 0;overflow:hidden}
+.band-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:26px;max-width:1100px}
+.band-cols h5{font-size:10.5px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--band-ink-2);margin:0 0 9px;opacity:.7}
+.band-cols div p{margin:0 0 5px;color:var(--band-ink);font-size:12.5px;font-weight:500}
+.band-cols div p.dim{color:var(--band-ink-2);font-weight:400}
+.giant{font-family:var(--disp);color:var(--band-ink);font-size:clamp(70px,17vw,210px);line-height:.78;letter-spacing:.005em;margin:22px 0 -.08em;text-transform:uppercase;user-select:none}
+
+/* ===== drawer ===== */
+.scrim{position:fixed;inset:0;background:rgba(20,13,11,.5);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(430px,100%);background:var(--surface);z-index:41;transform:translateX(101%);transition:transform .24s cubic-bezier(.3,.7,.3,1);display:flex;flex-direction:column;box-shadow:var(--lift)}
+.drawer.on{transform:none}
+.dr-photo{height:150px;position:relative;background:var(--sunk);flex:none;border-bottom:1px solid var(--rule)}
+.dr-photo svg.food{position:absolute;inset:0;width:100%;height:100%}
+.dr-close{position:absolute;right:10px;top:10px;width:30px;height:30px;border-radius:50%;background:rgba(43,31,26,.72);color:#F4ECDF;display:grid;place-items:center;font-size:15px}
+.dr-body{padding:18px 22px 26px;overflow-y:auto;display:flex;flex-direction:column;gap:20px}
+.dr-body h3{font-size:21px;font-weight:700;margin:0 0 3px;letter-spacing:.01em}
+.dr-sub{font-size:12.5px;color:var(--ink-3)}
+.kv{display:grid;grid-template-columns:66px 1fr;gap:8px 14px;font-size:13.5px;margin:0}
+.kv dt{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);padding-top:3px}
+.kv dd{margin:0;color:var(--ink-2)}
+.sec h4{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 11px}
+.srow{display:grid;grid-template-columns:60px 1fr 40px;align-items:center;gap:10px;font-size:12.5px;margin-bottom:8px}
+.srow .tr{height:5px;background:var(--sunk);border-radius:3px;overflow:hidden}
+.srow .tr i{display:block;height:100%;border-radius:3px}
+.srow .vv{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);text-align:right}
+.credit{font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--rule);padding-top:13px;line-height:1.6}
+
+/* ===== toast ===== */
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,calc(100% + 44px));background:var(--band);color:var(--band-ink);border-radius:5px;padding:12px 16px;display:flex;align-items:center;gap:14px;z-index:60;box-shadow:var(--lift);font-size:13.5px;transition:transform .26s cubic-bezier(.2,.8,.3,1);max-width:calc(100vw - 32px)}
+.toast.on{transform:translate(-50%,0)}
+.toast svg{width:16px;height:16px;color:var(--accent);flex:none}
+.toast button{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);white-space:nowrap}
+
+@media (max-width:900px){
+  .login{grid-template-columns:1fr}
+  .login-art{min-height:220px}
+  .art-stage{display:none}
+  .login-form{padding:32px 22px}
+  .main{grid-template-columns:1fr}
+  .panel{position:static;max-height:none;border-right:none;border-bottom:1px solid var(--rule)}
+  .results{padding:20px 16px 0}
+  .card{grid-template-columns:104px 1fr}
+  .photo{min-height:0}
+  .nav{display:none}
+  .drawer{width:100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.2 2.7-5 6-5s6 1.8 6 5"/><path d="M16 6.2A3 3 0 0 1 16 12M17.5 14.4c2 .6 3.5 2.1 3.5 4.6"/></symbol>
+<symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3.5 7.5A2 2 0 0 1 5.5 5.5H17v2"/><rect x="3.5" y="7.5" width="17" height="11" rx="2"/><circle cx="16.5" cy="13" r="1.2"/></symbol>
+<symbol id="i-walk" viewBox="0 0 24 24"><circle cx="13" cy="4.5" r="1.8"/><path d="M11 21l1.6-5.4L10 13l1-5 3.4 1.6L17 12M12.6 15.6 9 21M10.6 9.4 7 11"/></symbol>
+<symbol id="i-bike" viewBox="0 0 24 24"><circle cx="5.5" cy="17" r="3.5"/><circle cx="18.5" cy="17" r="3.5"/><path d="M8.5 17h4l3-8h-2M13 9l2 5M15 6h2.5"/></symbol>
+<symbol id="i-train" viewBox="0 0 24 24"><rect x="5.5" y="3.5" width="13" height="13" rx="3"/><path d="M5.5 10.5h13M8 20l-1.5 1M16 20l1.5 1M7.5 16.5v2M16.5 16.5v2"/><circle cx="9" cy="13.5" r=".8" fill="currentColor" stroke="none"/><circle cx="15" cy="13.5" r=".8" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-car" viewBox="0 0 24 24"><path d="M3.5 16v-3.2l1.9-4.4A2 2 0 0 1 7.2 7h9.6a2 2 0 0 1 1.8 1.4l1.9 4.4V16"/><path d="M3.5 12.8h17"/><rect x="3.5" y="16" width="4" height="2.6" rx="1"/><rect x="16.5" y="16" width="4" height="2.6" rx="1"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 9.7l5.9-.8L12 3.5Z"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 12.5c0 3.8-3.6 6.9-8 6.9-1 0-2-.2-2.9-.5L4 20.5l1.4-3.6A6.6 6.6 0 0 1 4 12.5c0-3.8 3.6-6.9 8-6.9s8 3.1 8 6.9Z"/></symbol>
+<symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M6.5 14.5h3"/></symbol>
+<symbol id="i-cash" viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 12h.01M17.5 12h.01"/></symbol>
+<symbol id="i-qr" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M20 20v.01M14 20v.01M17 20v.01M20 17v.01"/></symbol>
+<symbol id="i-ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9.5c1.6 1.5 1.6 3.5 0 5M10.2 8c2.5 2.3 2.5 5.7 0 8"/></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.2A4 4 0 0 1 12 8a4 4 0 0 1 7 2.8C19 15.6 12 20 12 20Z"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.2 9.2l5.6 5.6M14.8 9.2l-5.6 5.6"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.4 12.2l2.5 2.5 4.7-5"/></symbol>
+<symbol id="i-bowl" viewBox="0 0 24 24"><path d="M3.5 10.5h17c0 5-3.8 8.5-8.5 8.5s-8.5-3.5-8.5-8.5Z"/><path d="M9 7.2c0-1 1-1.4 1-2.4M13 7.2c0-1.4 1.2-1.7 1.2-3"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4.5h-4.5"/></symbol>
+<symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></symbol>
+<symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 4l1.7 4.6L18 10l-4.3 1.4L12 16l-1.7-4.6L6 10l4.3-1.4L12 4Z"/><path d="M18.5 16.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8Z"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M15.8 15.8 20 20"/></symbol>
+<symbol id="i-room" viewBox="0 0 24 24"><path d="M4 20V7l8-3 8 3v13"/><path d="M4 20h16M9.5 20v-5h5v5"/></symbol>
+<symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3.5M12 18.5V22M2 12h3.5M18.5 12H22"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M13.5 6.5h4a4 4 0 0 1 0 8h-4M10.5 17.5h-4a4 4 0 0 1 0-8h4M8.5 12h7"/></symbol>
+<symbol id="i-smoke" viewBox="0 0 24 24"><rect x="3" y="13" width="14" height="4" rx="1"/><path d="M19 13v4M14 13v4M15.5 9.5c1.5-1 1.5-2.5 0-3.5"/></symbol>
+</defs></svg>
+
+<div class="demo">演示原型 · 店铺、评分与评论数均为示例数据，非真实营业信息</div>
+
+<!-- ============ LOGIN ============ -->
+<div class="login" id="login">
+  <div class="login-art">
+    <div class="wordmark">MESHI<sup>®</sup></div>
+    <div class="art-stage" id="art-stage"></div>
+    <div>
+      <h2>今夜<br>吃哪</h2>
+      <p>告诉我们时间、位置和预算，从东京的餐厅里挑出真正合适的五家，并说明为什么是它们。</p>
+    </div>
+  </div>
+  <div class="login-form">
+    <div class="form-inner">
+      <div id="step-email" style="display:flex;flex-direction:column;gap:20px">
+        <h3>登录</h3>
+        <div class="field">
+          <span class="lbl"><svg class="i"><use href="#i-chat"/></svg>邮箱</span>
+          <input class="input" id="email" type="email" placeholder="you@example.com" autocomplete="email" value="chenzhiheng970717@gmail.com">
+        </div>
+        <button class="btn" id="send-code">发送验证码</button>
+        <button class="btn ghost" id="guest">先随便逛逛</button>
+        <p class="hint">不需要密码。邮箱只用来记住你的口味标记、常用地址和收藏。</p>
+      </div>
+      <div id="step-otp" style="display:none;flex-direction:column;gap:20px">
+        <h3>验证</h3>
+        <p class="hint">6 位验证码已发送至 <b id="sent-to" style="color:var(--ink)"></b>，10 分钟内有效。</p>
+        <div class="field otp">
+          <span class="lbl">验证码</span>
+          <input class="input" id="otp" inputmode="numeric" maxlength="6" placeholder="······">
+        </div>
+        <button class="btn" id="verify">进入</button>
+        <div style="display:flex;gap:18px"><button class="btn link" id="back-email">换个邮箱</button><button class="btn link" id="resend">重新发送</button></div>
+        <p class="hint">演示原型：任意 6 位数字均可进入。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="wordmark">MESHI<sup>®</sup></div>
+    <div class="sp"></div>
+    <nav class="nav"><span class="on">发现</span><span>收藏</span><span>足迹</span></nav>
+    <div class="acct"><svg class="i"><use href="#i-users"/></svg><span class="em" id="who">游客</span></div>
+    <button class="btn link" id="signout">退出</button>
+  </div>
+
+  <div class="main">
+    <aside class="panel">
+      <!-- 出发地 -->
+      <div class="grp">
+        <div class="grp-head"><span class="lbl"><svg class="i"><use href="#i-pin"/></svg>出发地</span></div>
+        <div class="savedrow" id="saved-row"></div>
+        <div class="ac-wrap">
+          <input class="input" id="addr" placeholder="输入地址或车站，如「新宿区新宿3-38」" autocomplete="off" value="東京都新宿区新宿3-38-1">
+          <button class="ac-star" id="save-addr" title="保存为常用地址">★</button>
+          <div class="ac-list" id="ac-list"></div>
+        </div>
+        <button class="btn ghost sm" id="geo" style="width:100%;justify-content:center"><svg class="i"><use href="#i-locate"/></svg>使用当前位置</button>
+      </div>
+
+      <!-- 时间 -->
+      <div class="grp">
+        <div class="grp-head"><span class="lbl"><svg class="i"><use href="#i-clock"/></svg>就餐时间</span></div>
+        <div class="two">
+          <input class="input" type="date" id="date">
+          <input class="input" type="time" id="time" step="60" value="19:00">
+        </div>
+        <div class="chips" id="time-quick"></div>
+      </div>
+
+      <!-- 交通 -->
+      <div class="grp">
+        <div class="grp-head"><span class="lbl">交通方式</span></div>
+        <div class="seg" id="mode-row"></div>
+      </div>
+
+      <!-- 时长 -->
+      <div class="grp">
+        <div class="grp-head"><span class="lbl">路上最多花费</span><span class="v" id="mins-val">20 分钟</span></div>
+        <input type="range" id="mins" min="5" max="45" step="5" value="20">
+        <div class="ends"><span>5 分</span><span>45 分</span></div>
+        <div class="reach"><svg class="i"><use href="#i-pin"/></svg>可达范围约 <b id="reach-val">1.6 km</b><span id="reach-note" style="opacity:.72"></span></div>
+      </div>
+
+      <!-- 人数 -->
+      <div class="grp">
+        <div class="grp-head"><span class="lbl"><svg class="i"><use href="#i-users"/></svg>人数</span></div>
+        <div class="stepper"><button id="p-minus">−</button><div class="n" id="party">2</div><button id="p-plus">+</button></div>
+      </div>
+
+      <!-- 口味 -->
+      <div class="grp">
+        <div class="grp-head"><span class="lbl"><svg class="i"><use href="#i-bowl"/></svg>口味</span><span class="v" id="genre-val">不限</span></div>
+        <div class="chips" id="genre-row"></div>
+      </div>
+
+      <!-- 预算 -->
+      <div class="grp">
+        <div class="grp-head"><span class="lbl"><svg class="i"><use href="#i-wallet"/></svg>人均预算</span></div>
+        <div class="budget-row">
+          <div class="field"><span class="lbl" style="font-size:10px">下限</span><select class="input" id="bmin"></select></div>
+          <span class="bdash">–</span>
+          <div class="field"><span class="lbl" style="font-size:10px">上限</span><select class="input" id="bmax"></select></div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="results">
+      <div class="rhead"><h1 id="rtitle">为你挑出 5 家</h1><span class="cnt" id="rcnt"></span></div>
+      <p class="rsum" id="rsum"></p>
+      <div class="filters">
+        <button class="fbtn" id="f-eaten"><svg class="i"><use href="#i-check"/></svg>排除吃过的</button>
+        <button class="fbtn" id="f-liked"><svg class="i"><use href="#i-heart"/></svg>只看喜欢的</button>
+        <span class="fspace"></span>
+        <span class="batch" id="batch"></span>
+      </div>
+      <div class="list" id="list"></div>
+      <div class="more"><button class="btn ghost sm" id="reroll"><svg class="i"><use href="#i-refresh"/></svg>换一批</button></div>
+    </section>
+  </div>
+
+  <footer class="band">
+    <div class="band-cols">
+      <div><h5>数据来源</h5><p>ホットペッパー グルメ</p><p class="dim">正式版将在此显示官方署名与 logo</p></div>
+      <div><h5>覆盖范围</h5><p>東京 23 区</p><p class="dim">演示数据 28 家</p></div>
+      <div><h5>排序方式</h5><p>规则打分 · 可解释</p><p class="dim">距离 30 / 口味 25 / 人气 20 / 预算 15 / 场景 10</p></div>
+      <div><h5>版本</h5><p>Prototype v0.2</p><p class="dim">界面评审用</p></div>
+    </div>
+    <div class="giant">MESHI</div>
+  </footer>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="dr-photo" id="dr-photo"><button class="dr-close" id="dr-close">✕</button></div>
+  <div class="dr-body">
+    <div><h3 id="dr-name"></h3><div class="dr-sub" id="dr-sub"></div></div>
+    <dl class="kv" id="dr-kv"></dl>
+    <a class="btn" id="dr-link" href="#" target="_blank" rel="noopener"><svg class="i"><use href="#i-link"/></svg>在 HotPepper 打开</a>
+    <div class="sec"><h4>为什么排这个位置</h4><div id="dr-scores"></div></div>
+    <p class="credit">店铺信息由 <b>ホットペッパー グルメ</b> 提供。评分与评论数在正式版需由 Google Places 补充或自行积累——HotPepper API 不返回评分字段。当前均为演示数据。</p>
+  </div>
+</aside>
+
+<div class="toast" id="toast"><svg class="i"><use href="#i-spark"/></svg><span id="toast-msg"></span><button id="toast-act" style="display:none"></button></div>
+
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id);}
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function ico(n,cls){return '<svg class="i '+(cls||'')+'"><use href="#i-'+n+'"/></svg>';}
+function store(k,v){try{ if(v===undefined) return JSON.parse(localStorage.getItem("meshi:"+k)||"null"); localStorage.setItem("meshi:"+k,JSON.stringify(v)); }catch(e){ return null; } }
+
+/* ---------- 分类 ---------- */
+var GENRES=[
+ {c:"G001",n:"居酒屋"},{c:"G004",n:"和食"},{c:"G013",n:"拉面"},{c:"G008",n:"烤肉"},
+ {c:"G007",n:"中华"},{c:"G006",n:"意法料理"},{c:"G005",n:"洋食"},{c:"G017",n:"韩国料理"},
+ {c:"G009",n:"亚洲菜"},{c:"G014",n:"咖啡甜点"}];
+var GMAP={}; GENRES.forEach(function(g){GMAP[g.c]=g;});
+
+/* ---------- 食物插画（照片占位） ---------- */
+var ART={
+ G001:'<rect width="100" height="100" fill="#E8C9A0"/><ellipse cx="50" cy="80" rx="34" ry="6" fill="#C9A273"/><rect x="16" y="66" width="68" height="8" rx="4" fill="#F3E4CE"/><g><rect x="27" y="24" width="5" height="46" rx="2.5" fill="#8A6842"/><rect x="21" y="28" width="17" height="13" rx="5" fill="#C0431D"/><rect x="21" y="44" width="17" height="13" rx="5" fill="#A93A18"/></g><g><rect x="47" y="18" width="5" height="52" rx="2.5" fill="#8A6842"/><rect x="41" y="22" width="17" height="13" rx="5" fill="#D4652C"/><rect x="41" y="38" width="17" height="13" rx="5" fill="#C0431D"/><rect x="41" y="54" width="17" height="9" rx="4" fill="#456638"/></g><g><rect x="67" y="26" width="5" height="44" rx="2.5" fill="#8A6842"/><rect x="61" y="30" width="17" height="13" rx="5" fill="#A93A18"/><rect x="61" y="46" width="17" height="13" rx="5" fill="#D4652C"/></g>',
+ G004:'<rect width="100" height="100" fill="#DFE4D3"/><ellipse cx="50" cy="80" rx="33" ry="5" fill="#B8C0A6"/><path d="M18 50h64c0 18-14 30-32 30S18 68 18 50z" fill="#F6F1E4"/><path d="M18 50h64" stroke="#C9C2AC" stroke-width="2"/><circle cx="50" cy="60" r="10" fill="#C0431D"/><circle cx="50" cy="60" r="4" fill="#F6F1E4"/><path d="M60 24 84 34" stroke="#8A6842" stroke-width="3" stroke-linecap="round"/><path d="M62 30 86 40" stroke="#8A6842" stroke-width="3" stroke-linecap="round"/>',
+ G013:'<rect width="100" height="100" fill="#F0DCC0"/><ellipse cx="50" cy="82" rx="30" ry="5" fill="#CBAE87"/><path d="M16 46h68c0 20-15 34-34 34S16 66 16 46z" fill="#2B1F1A"/><path d="M20 50h60c0 4-1 8-2 11H22c-1-3-2-7-2-11z" fill="#C98A3C"/><circle cx="38" cy="55" r="7" fill="#F6F1E4"/><path d="M38 55a7 7 0 0 1 7-7" stroke="#C0431D" stroke-width="2.5" fill="none"/><rect x="56" y="49" width="16" height="9" rx="2" fill="#8A6842"/><path d="M28 34c2-6 8-6 10 0M46 30c2-6 8-6 10 0" stroke="#D6C6A8" stroke-width="3" fill="none" stroke-linecap="round"/>',
+ G008:'<rect width="100" height="100" fill="#D9CDBE"/><rect x="14" y="40" width="72" height="38" rx="5" fill="#3A2C25"/><path d="M22 48h56M22 58h56M22 68h56" stroke="#6B554A" stroke-width="3"/><rect x="28" y="43" width="20" height="12" rx="3" fill="#C0431D"/><rect x="54" y="61" width="22" height="12" rx="3" fill="#A93A18"/><path d="M34 26c3 6-3 8 0 14M56 24c3 6-3 8 0 14" stroke="#EAE0D2" stroke-width="3" fill="none" stroke-linecap="round"/>',
+ G007:'<rect width="100" height="100" fill="#E3D3C6"/><ellipse cx="50" cy="80" rx="30" ry="5" fill="#BCA492"/><path d="M14 44h72c0 20-16 34-36 34S14 64 14 44z" fill="#4A3830"/><ellipse cx="50" cy="44" rx="36" ry="7" fill="#6B554A"/><path d="M34 44c6-4 12-4 18 0s12 4 16 0" stroke="#C98A3C" stroke-width="4" fill="none"/><path d="M86 46h10v6H84" stroke="#4A3830" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M38 24c3 5-3 7 0 12M58 22c3 5-3 7 0 12" stroke="#D8CBBE" stroke-width="3" fill="none" stroke-linecap="round"/>',
+ G006:'<rect width="100" height="100" fill="#E6E0CE"/><circle cx="50" cy="56" r="34" fill="#F8F4EA"/><circle cx="50" cy="56" r="25" fill="#EFE7D6"/><path d="M34 56c4-8 12-10 16-4s14 6 16-2" stroke="#C98A3C" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M36 62c5-6 12-6 16-1s12 5 14-1" stroke="#D9A44F" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="4" fill="#C0431D"/><circle cx="60" cy="60" r="4" fill="#C0431D"/><path d="M50 44c2-3 5-3 6 0" stroke="#456638" stroke-width="3" fill="none" stroke-linecap="round"/>',
+ G005:'<rect width="100" height="100" fill="#EADCC4"/><circle cx="50" cy="56" r="33" fill="#FAF6EC"/><path d="M28 58c0-12 10-20 22-20s22 8 22 20-10 16-22 16-22-4-22-16z" fill="#E8B33C"/><path d="M36 54c6-6 16-6 22 0" stroke="#F2D48A" stroke-width="3" fill="none"/><path d="M40 68c8 4 16 4 22-1" stroke="#C0431D" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M62 44c4-2 8 0 8 4" stroke="#456638" stroke-width="3" fill="none" stroke-linecap="round"/>',
+ G017:'<rect width="100" height="100" fill="#DCC9BC"/><ellipse cx="50" cy="82" rx="28" ry="5" fill="#BBA294"/><path d="M18 46h64c0 19-14 32-32 32S18 65 18 46z" fill="#3A2C25"/><ellipse cx="50" cy="46" rx="32" ry="6" fill="#C0431D"/><path d="M34 46c6 4 14 4 20 0s10 3 14 0" stroke="#8E3315" stroke-width="4" fill="none"/><path d="M12 52h-6M88 52h6" stroke="#3A2C25" stroke-width="5" stroke-linecap="round"/><path d="M36 26c3 5-3 7 0 12M58 24c3 5-3 7 0 12" stroke="#D6C4B6" stroke-width="3" fill="none" stroke-linecap="round"/>',
+ G009:'<rect width="100" height="100" fill="#E0E3CE"/><ellipse cx="50" cy="80" rx="30" ry="5" fill="#B7BCA0"/><path d="M16 48h68c0 19-15 32-34 32S16 67 16 48z" fill="#F5F1E2"/><ellipse cx="50" cy="48" rx="34" ry="6" fill="#DCD6C0"/><path d="M32 52c6-4 12 2 18-2s12 4 18 0" stroke="#456638" stroke-width="4" fill="none"/><path d="M40 60c4 4 12 4 18 0" stroke="#C0431D" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M66 30c8 2 12 8 10 14" stroke="#C0431D" stroke-width="4" fill="none" stroke-linecap="round"/>',
+ G014:'<rect width="100" height="100" fill="#E7DACB"/><ellipse cx="48" cy="82" rx="30" ry="5" fill="#C2AF9E"/><path d="M22 44h52v16c0 12-10 20-26 20s-26-8-26-20z" fill="#FAF6EC"/><ellipse cx="48" cy="44" rx="26" ry="6" fill="#8A5A32"/><path d="M74 50h8a7 7 0 0 1 0 14h-8" stroke="#FAF6EC" stroke-width="5" fill="none"/><path d="M38 24c3 6-3 8 0 14M56 22c3 6-3 8 0 14" stroke="#CDBBA9" stroke-width="3" fill="none" stroke-linecap="round"/>'
+};
+function art(g){return '<svg class="food" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">'+ART[g]+'</svg>';}
+
+/* ---------- 地址库（门牌号级；正式版由 Google Geocoding / MapKit 解析任意地址） ---------- */
+function A(addr,near,lat,lng){return {addr:addr,near:near,lat:lat,lng:lng};}
+var ADDR=[
+ A("東京都新宿区新宿3-38-1","新宿駅 東口",35.6912,139.7020),
+ A("東京都新宿区西新宿1-1-3","新宿駅 西口",35.6899,139.6982),
+ A("東京都新宿区新宿3-14-1","新宿三丁目駅",35.6938,139.7050),
+ A("東京都新宿区西新宿2-8-1","都庁前駅",35.6896,139.6917),
+ A("東京都渋谷区道玄坂2-1-1","渋谷駅 ハチ公口",35.6590,139.7005),
+ A("東京都渋谷区神南1-19-11","渋谷駅 徒歩7分",35.6625,139.6993),
+ A("東京都渋谷区神宮前4-12-10","表参道駅",35.6652,139.7124),
+ A("東京都中央区八重洲2-1-1","東京駅 八重洲口",35.6812,139.7690),
+ A("東京都千代田区丸の内1-9-1","東京駅 丸の内口",35.6814,139.7648),
+ A("東京都豊島区南池袋1-28-2","池袋駅 東口",35.7292,139.7134),
+ A("東京都渋谷区恵比寿南1-5-5","恵比寿駅 西口",35.6465,139.7100),
+ A("東京都目黒区上目黒1-22-4","中目黒駅",35.6442,139.6993),
+ A("東京都中央区銀座4-5-6","銀座四丁目交差点",35.6713,139.7660),
+ A("東京都港区六本木6-10-1","六本木駅",35.6628,139.7315),
+ A("東京都台東区上野7-1-1","上野駅 不忍口",35.7135,139.7745),
+ A("東京都千代田区外神田1-17-6","秋葉原駅 電気街口",35.6983,139.7714),
+ A("東京都世田谷区北沢2-24-5","下北沢駅",35.6613,139.6683),
+ A("東京都武蔵野市吉祥寺本町1-11-1","吉祥寺駅",35.7030,139.5800),
+ A("東京都新宿区神楽坂5-1","神楽坂駅",35.7019,139.7405),
+ A("東京都港区港南2-16-3","品川駅 港南口",35.6285,139.7405)
+];
+var TOKYO={lat:35.6812,lng:139.7671};
+
+var MODES=[{k:"walk",n:"步行",i:"walk",speed:80,fixed:0,note:"80 m/分"},
+ {k:"bike",n:"自行车",i:"bike",speed:250,fixed:0,note:"250 m/分"},
+ {k:"train",n:"电车",i:"train",speed:400,fixed:12,note:"扣 12 分接驳候车"},
+ {k:"car",n:"驾车",i:"car",speed:300,fixed:10,note:"扣 10 分找车位"}];
+
+var BUDGETS=[1000,1500,2000,3000,4000,5000,7000,10000,15000];
+
+/* ---------- 店铺（演示数据，字段对齐 HotPepper） ---------- */
+function S(id,name,g,lat,lng,st,bud,cap,room,ns,course,pay,rt,rv,o1,o2){
+  // url: 正式版直接用 HotPepper API 返回的 shop.urls.pc；演示阶段回退到站内关键词搜索
+  return {id:id,name:name,g:g,lat:lat,lng:lng,station:st,budget:bud,cap:cap,room:room,nonsmoke:ns,
+   course:course,pay:pay,rating:rt,reviews:rv,open:[o1,o2],url:null,photo:null};
+}
+function shopUrl(s){ return s.url || "https://www.hotpepper.jp/CSP/sr/?keyword="+encodeURIComponent(s.name); }
+var SHOPS=[
+ S("a1","炭火焼鳥 とりまる","G001",35.6919,139.7031,"新宿駅 東口 徒歩3分",3500,8,1,1,1,["card","cash","ic"],4.3,842,17,23.5),
+ S("a2","蕎麦切り 花見月","G004",35.6884,139.6968,"新宿駅 南口 徒歩5分",2800,4,0,1,0,["cash","ic"],4.1,316,11,21),
+ S("a3","中華そば 一灯","G013",35.6941,139.7052,"新宿三丁目駅 徒歩4分",1200,2,0,1,0,["cash"],4.6,1580,11,23),
+ S("a4","大衆酒場 のぐち","G001",35.6862,139.7043,"新宿駅 徒歩7分",2600,12,0,0,1,["cash","qr"],3.8,527,16,24),
+ S("a5","鮨処 かねさだ","G004",35.6903,139.6989,"新宿駅 西口 徒歩4分",12000,6,1,1,1,["card","ic"],4.5,203,17.5,22.5),
+ S("a6","トラットリア・ヴェント","G006",35.6875,139.7092,"新宿御苑前駅 徒歩6分",4500,10,1,1,1,["card","qr","ic"],4.0,388,11.5,22),
+ S("a7","麻婆専門 川辺","G007",35.6934,139.7008,"新宿駅 東口 徒歩5分",2200,6,0,1,0,["cash","qr"],4.2,671,11,22),
+ S("a8","焼肉 白樺","G008",35.6849,139.7015,"新宿駅 南口 徒歩8分",6000,14,1,1,1,["card","ic"],4.1,912,17,23),
+ S("a9","立ち飲み まるやま","G001",35.6912,139.7001,"新宿駅 西口 徒歩2分",1800,5,0,0,0,["cash"],3.9,244,15,23.5),
+ S("a10","カフェ 木洩れ日","G014",35.6889,139.7024,"新宿駅 東口 徒歩2分",1400,4,0,1,0,["card","qr","ic"],4.0,455,8,20),
+ S("a11","タイ屋台 バーンチャン","G009",35.6957,139.7043,"新宿三丁目駅 徒歩6分",2400,8,0,1,0,["cash","qr"],4.2,289,11,23),
+ S("b1","ビストロ・ラルドワーズ","G006",35.6601,139.6989,"渋谷駅 徒歩6分",5500,8,1,1,1,["card","ic"],4.4,507,18,23),
+ S("b2","韓国食堂 ハヌル","G017",35.6624,139.7043,"渋谷駅 徒歩9分",3200,10,0,0,1,["cash","qr"],3.7,633,11,23),
+ S("b3","焼き餃子 龍門","G007",35.6572,139.6982,"渋谷駅 徒歩4分",1600,6,0,1,0,["cash"],4.3,1120,11,23),
+ S("b4","炉端焼き 潮風","G001",35.6612,139.7031,"渋谷駅 徒歩7分",4200,12,1,1,1,["card","ic","qr"],4.0,394,17,24),
+ S("c1","天ぷら 松乃木","G004",35.6797,139.7648,"東京駅 八重洲 徒歩4分",8000,6,1,1,1,["card","ic"],4.4,278,11.5,21.5),
+ S("c2","洋食 グリル春日","G005",35.6828,139.7627,"東京駅 丸の内 徒歩6分",3000,6,0,1,0,["card","cash"],4.2,690,11,21),
+ S("c3","つけ麺 玄武","G013",35.6805,139.7712,"東京駅 八重洲 徒歩7分",1300,3,0,1,0,["cash","ic"],4.1,833,11,22),
+ S("d1","うなぎ 川長","G004",35.7276,139.7132,"池袋駅 東口 徒歩5分",5200,8,1,1,1,["card","cash"],4.3,412,11.5,21),
+ S("d2","四川担々麺 紅椒","G007",35.7304,139.7118,"池袋駅 徒歩4分",1500,4,0,1,0,["cash","qr"],4.4,1265,11,23),
+ S("d3","焼肉 牛源","G008",35.7261,139.7160,"池袋駅 東口 徒歩8分",4800,16,1,1,1,["card","ic"],3.9,588,17,23.5),
+ S("e1","ワインバー ソラーレ","G006",35.6470,139.7085,"恵比寿駅 徒歩3分",6500,6,0,1,1,["card","ic"],4.5,331,18,24),
+ S("e2","居酒屋 なごみ","G001",35.6452,139.7112,"恵比寿駅 徒歩5分",3800,10,1,1,1,["card","cash","qr"],4.0,476,17,23.5),
+ S("f1","スパイス食堂 マハラ","G009",35.6437,139.6981,"中目黒駅 徒歩3分",2600,6,0,1,0,["cash","qr"],4.2,352,11,22),
+ S("f2","焙煎所 くろねこ","G014",35.6449,139.7005,"中目黒駅 徒歩4分",1200,4,0,1,0,["card","qr","ic"],4.4,708,8,19),
+ S("g1","鉄板焼 銀座八十八","G005",35.6708,139.7649,"銀座駅 徒歩3分",14000,8,1,1,1,["card"],4.6,164,17.5,22),
+ S("g2","蕎麦 銀座土肥","G004",35.6725,139.7671,"銀座駅 徒歩5分",3400,5,0,1,0,["card","cash"],4.1,297,11,21),
+ S("h1","焼き鳥 六本木炭火","G001",35.6633,139.7302,"六本木駅 徒歩4分",5000,12,1,1,1,["card","ic","qr"],4.2,545,17,25)
+];
+
+/* ---------- 状态 ---------- */
+var now=new Date();
+var State={
+ origin:ADDR[0], addrText:ADDR[0].addr,
+ date:new Date().toISOString().slice(0,10), time:"19:00",
+ mode:"walk", mins:20, party:2, genres:[], bmin:2000, bmax:5000,
+ batch:0, picked:store("picked")||null,
+ marks:store("marks")||{}, saved:store("saved")||[{addr:"東京都新宿区新宿3-38-1",near:"新宿駅 東口",lat:35.6912,lng:139.7020}],
+ fEaten:false, fLiked:false
+};
+
+/* ---------- 工具 ---------- */
+function dist(a,b,c,d){var R=6371000,p=Math.PI/180,dl=(c-a)*p,dg=(d-b)*p;
+ var x=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(a*p)*Math.cos(c*p)*Math.sin(dg/2)*Math.sin(dg/2);
+ return Math.round(2*R*Math.asin(Math.sqrt(x)));}
+function mode(){for(var i=0;i<MODES.length;i++)if(MODES[i].k===State.mode)return MODES[i];return MODES[0];}
+function radius(){var m=mode();return Math.max(0,State.mins-m.fixed)*m.speed;}
+function tmin(d){var m=mode();return d/m.speed+m.fixed;}
+function hourNum(){var p=State.time.split(":");return (+p[0])+(+p[1])/60;}
+function yen(n){return "¥"+n.toLocaleString("en-US");}
+function cl(x){return Math.max(0,Math.min(1,x));}
+function popOf(s){return cl(.7*((s.rating-3.2)/1.4)+.3*Math.min(1,Math.log10(s.reviews)/3.2));}
+
+/* ---------- 打分 ---------- */
+var W=[{k:"dist",n:"距离",w:.30,c:"var(--accent)"},{k:"gen",n:"口味",w:.25,c:"var(--gold)"},
+ {k:"pop",n:"人气",w:.20,c:"var(--green)"},{k:"bud",n:"预算",w:.15,c:"var(--ink-2)"},
+ {k:"fit",n:"场景",w:.10,c:"var(--ink-3)"}];
+
+function evaluate(){
+ var R=radius(),H=hourNum(),out=[],rej={dist:0,time:0,cap:0,bud:0,gen:0,dis:0};
+ SHOPS.forEach(function(s){
+  if(State.marks[s.id]==="dislike"){rej.dis++;return;}
+  if(State.fLiked && State.marks[s.id]!=="like") return;
+  if(State.fEaten && State.marks[s.id]==="eaten") return;
+  var d=dist(State.origin.lat,State.origin.lng,s.lat,s.lng);
+  if(d>R){rej.dist++;return;}
+  if(!(H>=s.open[0] && H<=s.open[1]-1)){rej.time++;return;}
+  if(s.cap<State.party){rej.cap++;return;}
+  if(s.budget<State.bmin*.8||s.budget>State.bmax*1.2){rej.bud++;return;}
+  if(State.genres.length && State.genres.indexOf(s.g)<0){rej.gen++;return;}
+  var t=tmin(d),mid=(State.bmin+State.bmax)/2,span=Math.max(1,(State.bmax-State.bmin)/2);
+  var p={dist:cl(1-t/State.mins), gen:State.genres.length?1:.6, pop:popOf(s),
+   bud:cl(1-Math.abs(s.budget-mid)/span),
+   fit:cl(.55+(s.room&&State.party>=4?.3:0)+(s.course&&State.party>=4?.15:0)+(s.nonsmoke?.05:0))};
+  out.push({s:s,d:d,t:t,p:p,score:W.reduce(function(a,x){return a+x.w*p[x.k];},0)});
+ });
+ out.sort(function(a,b){return b.score-a.score;});
+ return {rows:out,rej:rej};
+}
+
+/* ---------- 推荐理由 ---------- */
+function why(r){
+ var m=mode(),bits=[];
+ bits.push('<em>'+m.n+' '+Math.round(r.t)+' 分钟</em>');
+ if(r.p.bud>.75) bits.push('人均 '+yen(r.s.budget)+' <em>正好在预算内</em>');
+ else if(r.s.budget<(State.bmin+State.bmax)/2) bits.push('人均 '+yen(r.s.budget)+'，比预算省');
+ if(r.s.rating>=4.3) bits.push('<em>评分 '+r.s.rating.toFixed(1)+'</em>，'+r.s.reviews+' 条评论');
+ if(r.s.room&&State.party>=4) bits.push('有 '+r.s.cap+' 人包间');
+ else if(r.s.cap>=State.party+4) bits.push('位子宽松');
+ return bits.join(' · ');
+}
+function stars(v){
+ var h='',full=Math.floor(v);
+ for(var i=0;i<5;i++) h+='<svg class="i'+(i<full?'':' half')+'"><use href="#i-star"/></svg>';
+ return h;
+}
+var PAYN={card:["card","刷卡"],cash:["cash","现金"],ic:["ic","IC 卡"],qr:["qr","扫码"]};
+
+/* ---------- toast ---------- */
+var tTimer;
+function toast(msg,actLabel,actFn){
+ $("toast-msg").textContent=msg;
+ var b=$("toast-act");
+ if(actLabel){b.style.display="";b.textContent=actLabel;b.onclick=function(){hideToast();actFn();};}
+ else b.style.display="none";
+ $("toast").classList.add("on");
+ clearTimeout(tTimer); tTimer=setTimeout(hideToast,5200);
+}
+function hideToast(){$("toast").classList.remove("on");}
+
+/* ---------- 渲染 ---------- */
+var lastRows=[];
+function render(){
+ var res=evaluate(); lastRows=res.rows;
+ var pages=Math.max(1,Math.ceil(res.rows.length/5));
+ if(State.batch>=pages) State.batch=0;
+ var page=res.rows.slice(State.batch*5,State.batch*5+5);
+
+ $("rtitle").textContent = page.length? "为你挑出 "+page.length+" 家" : "没有合适的店";
+ $("rcnt").textContent = res.rows.length>5 ? "共 "+res.rows.length+" 家通过筛选" : "";
+ var m=mode();
+ $("rsum").textContent = State.addrText+" 出发 · "+m.n+"最多 "+State.mins+" 分钟 · "+State.party+" 人 · 人均 "+yen(State.bmin)+"–"+yen(State.bmax);
+ $("batch").textContent = pages>1 ? "第 "+(State.batch+1)+" / "+pages+" 批" : "";
+ $("reroll").style.display = pages>1 ? "" : "none";
+
+ var L=$("list"); L.innerHTML="";
+ if(!page.length){
+  var w=[];
+  if(res.rej.dist)w.push(res.rej.dist+" 家太远");
+  if(res.rej.time)w.push(res.rej.time+" 家这个时间没营业");
+  if(res.rej.bud)w.push(res.rej.bud+" 家预算不符");
+  if(res.rej.cap)w.push(res.rej.cap+" 家坐不下 "+State.party+" 人");
+  if(res.rej.gen)w.push(res.rej.gen+" 家口味不符");
+  if(res.rej.dis)w.push(res.rej.dis+" 家你标过不喜欢");
+  L.appendChild(el("div","empty",
+   ico("search")+'<p>'+(w.join("，")||"当前条件下没有匹配的店")+'。</p>'+
+   '<p class="s">试试把时间放宽到 '+Math.min(45,State.mins+10)+' 分钟，或把预算上限提高一档。</p>'));
+  return;
+ }
+
+ page.forEach(function(r,i){
+  var s=r.s,g=GMAP[s.g],mk=State.marks[s.id],picked=State.picked===s.id;
+  var rank=State.batch*5+i+1;
+  var c=el("div","card"+(rank===1?" best":"")+(picked?" picked":""));
+  var pays=s.pay.map(function(k){return '<span class="pay">'+ico(PAYN[k][0])+PAYN[k][1]+'</span>';}).join("");
+  c.innerHTML=
+   '<div class="photo" data-act="open" role="link" tabindex="0">'+art(s.g)+
+     '<span class="rk">'+String(rank).padStart(2,"0")+'</span><span class="demo-tag">示例图</span></div>'+
+   '<div class="cbody">'+
+     '<div class="crow1"><button class="cname" data-act="open" title="在 HotPepper 打开">'+s.name+ico("link","lk")+'</button>'+
+       '<span class="gtag">'+g.n+'</span>'+(picked?'<span class="pickmark">'+ico("check")+'今晚就这家</span>':'')+
+       '<span class="cscore">'+r.score.toFixed(2)+'</span></div>'+
+     '<div class="cmeta">'+
+       '<span>'+ico("pin")+s.station+'</span>'+
+       '<span class="stars">'+stars(s.rating)+'<b style="color:var(--ink);font-family:var(--mono);font-size:12.5px;margin-left:3px">'+s.rating.toFixed(1)+'</b>'+
+         '<span class="rv">'+ico("chat")+' '+s.reviews+'</span></span>'+
+       '<span class="price">'+yen(s.budget)+' <span style="color:var(--ink-3);font-family:var(--sans);font-size:11.5px">/ 人</span></span>'+
+     '</div>'+
+     '<div class="why">'+ico("spark")+'<span>'+why(r)+'</span></div>'+
+     '<div class="pays">'+pays+
+       (s.room?'<span class="pay">'+ico("room")+'包间</span>':'')+
+       (s.nonsmoke?'<span class="pay">'+ico("smoke")+'禁烟</span>':'')+'</div>'+
+     '<div class="cacts">'+
+       '<button class="tog'+(mk==="eaten"?" on-eat":"")+'" data-act="eaten">'+ico("check")+'吃过</button>'+
+       '<button class="tog'+(mk==="like"?" on-like":"")+'" data-act="like">'+ico("heart")+'喜欢</button>'+
+       '<button class="tog'+(mk==="dislike"?" on-dis":"")+'" data-act="dislike">'+ico("x")+'不喜欢</button>'+
+       '<button class="detail" data-act="detail">详情</button>'+
+       '<button class="pick'+(picked?" on":"")+'" data-act="pick">'+ico(picked?"check":"bowl")+(picked?"已选定":"就这家")+'</button>'+
+     '</div>'+
+   '</div>';
+  c.addEventListener("click",function(e){
+   var b=e.target.closest("[data-act]"); if(!b)return;
+   var a=b.getAttribute("data-act");
+   if(a==="open"){window.open(shopUrl(s),"_blank","noopener");return;}
+   if(a==="detail"){openDrawer(r);return;}
+   if(a==="pick"){
+    if(State.picked===s.id){State.picked=null;store("picked",null);toast("已取消选定 "+s.name);}
+    else{State.picked=s.id;store("picked",s.id);toast("就这家：" + s.name + "。就餐后记得回来评价一下。");}
+    render();return;
+   }
+   mark(s,a);
+  });
+  L.appendChild(c);
+ });
+}
+
+function mark(s,kind){
+ var prev=State.marks[s.id]||null;
+ if(prev===kind){delete State.marks[s.id];}
+ else{State.marks[s.id]=kind;}
+ store("marks",State.marks);
+ var label={eaten:"吃过",like:"喜欢",dislike:"不喜欢"}[kind];
+ if(State.marks[s.id]===kind){
+  if(kind==="dislike"){
+   toast(s.name+" 已标记为不喜欢，之后不再推荐","撤销",function(){
+    if(prev)State.marks[s.id]=prev; else delete State.marks[s.id];
+    store("marks",State.marks); render();
+   });
+  } else toast(s.name+" 已标记为「"+label+"」","撤销",function(){
+    if(prev)State.marks[s.id]=prev; else delete State.marks[s.id];
+    store("marks",State.marks); render();
+  });
+ } else toast("已取消 "+s.name+" 的「"+label+"」标记");
+ render();
+}
+
+/* ---------- 抽屉 ---------- */
+function openDrawer(r){
+ var s=r.s,g=GMAP[s.g],m=mode();
+ var ph=$("dr-photo");
+ ph.innerHTML=art(s.g)+'<span class="demo-tag" style="position:absolute;right:10px;bottom:8px;font-size:10px;letter-spacing:.08em;color:var(--band-ink);background:rgba(43,31,26,.6);padding:2px 6px;border-radius:2px">示例图 · 正式版为店铺照片</span><button class="dr-close" id="dr-close2">✕</button>';
+ $("dr-close2").addEventListener("click",closeDrawer);
+ $("dr-name").textContent=s.name;
+ $("dr-sub").textContent=g.n+" · "+s.station;
+ var oh=function(h){var H=Math.floor(h)%24,M=(h%1)?"30":"00";return (H<10?"0":"")+H+":"+M;};
+ $("dr-kv").innerHTML=
+  '<dt>评分</dt><dd>'+s.rating.toFixed(1)+' / 5.0 · '+s.reviews+' 条评论</dd>'+
+  '<dt>营业</dt><dd>'+oh(s.open[0])+' – '+oh(s.open[1])+'（L.O. 提前 1 小时）</dd>'+
+  '<dt>人均</dt><dd>'+yen(s.budget)+'</dd>'+
+  '<dt>到达</dt><dd>'+m.n+' 约 '+Math.round(r.t)+' 分钟 · 直线 '+(r.d/1000).toFixed(1)+' km</dd>'+
+  '<dt>容纳</dt><dd>最多 '+s.cap+' 人'+(s.room?' · 有包间':'')+'</dd>'+
+  '<dt>支付</dt><dd>'+s.pay.map(function(k){return PAYN[k][1];}).join(" · ")+'</dd>';
+ $("dr-link").href=shopUrl(s);
+ $("dr-scores").innerHTML=W.map(function(x){
+  return '<div class="srow"><span>'+x.n+'<span style="color:var(--ink-3);font-size:10.5px"> ×'+x.w.toFixed(2)+'</span></span>'+
+   '<span class="tr"><i style="width:'+(r.p[x.k]*100).toFixed(0)+'%;background:'+x.c+'"></i></span>'+
+   '<span class="vv">'+r.p[x.k].toFixed(2)+'</span></div>';
+ }).join("")+'<div class="srow" style="border-top:1px solid var(--rule);padding-top:9px;margin-top:2px">'+
+  '<span style="font-weight:700">总分</span><span></span><span class="vv" style="color:var(--accent)">'+r.score.toFixed(2)+'</span></div>';
+ $("drawer").classList.add("on");$("drawer").setAttribute("aria-hidden","false");$("scrim").classList.add("on");
+}
+function closeDrawer(){$("drawer").classList.remove("on");$("drawer").setAttribute("aria-hidden","true");$("scrim").classList.remove("on");}
+
+/* ---------- 常用地址 ---------- */
+function renderSaved(){
+ var r=$("saved-row"); r.innerHTML="";
+ State.saved.forEach(function(a){
+  var b=el("span","saved",'<b>'+a.near+'</b><button title="移除">✕</button>');
+  b.title=a.addr;
+  b.querySelector("b").style.cursor="pointer";
+  b.querySelector("b").addEventListener("click",function(){useAddr(a);});
+  b.querySelector("button").addEventListener("click",function(e){
+   e.stopPropagation();
+   State.saved=State.saved.filter(function(x){return x.addr!==a.addr;});
+   store("saved",State.saved); renderSaved(); syncStar();
+  });
+  r.appendChild(b);
+ });
+ if(!State.saved.length) r.appendChild(el("span","hint",'点输入框右侧 ★ 把当前地址存为常用'));
+}
+function useAddr(a){
+ State.origin=a; State.addrText=a.addr;
+ $("addr").value=a.addr; $("ac-list").classList.remove("on");
+ State.batch=0; syncStar(); render();
+}
+function syncStar(){
+ var v=$("addr").value.trim();
+ $("save-addr").classList.toggle("on", State.saved.some(function(x){return x.addr===v;}));
+}
+/* 定位：真实浏览器定位；演示数据只覆盖东京，超出范围时贴到最近的演示区域 */
+function locate(){
+ if(!navigator.geolocation){toast("这个浏览器不支持定位，请手动输入地址");return;}
+ toast("正在获取当前位置…");
+ navigator.geolocation.getCurrentPosition(function(pos){
+  var la=pos.coords.latitude, ln=pos.coords.longitude;
+  var d=dist(la,ln,TOKYO.lat,TOKYO.lng);
+  if(d>60000){
+   var near=ADDR.slice().sort(function(x,y){return dist(la,ln,x.lat,x.lng)-dist(la,ln,y.lat,y.lng);})[0];
+   useAddr(near);
+   toast("已获取你的位置，但演示数据只覆盖东京，已切换到 "+near.near);
+   return;
+  }
+  State.origin={addr:"当前位置",near:"GPS 定位",lat:la,lng:ln};
+  State.addrText="当前位置";
+  $("addr").value="当前位置（"+la.toFixed(4)+", "+ln.toFixed(4)+"）";
+  State.batch=0; syncStar(); render();
+  toast("已定位到当前位置");
+ },function(err){
+  toast(err.code===1?"定位被拒绝，请在浏览器里允许位置权限，或手动输入地址":"定位失败，请手动输入地址");
+ },{enableHighAccuracy:true,timeout:8000,maximumAge:60000});
+}
+
+/* ---------- 表单 ---------- */
+function build(){
+ $("date").value=State.date;
+ renderSaved(); syncStar();
+
+ var ai=$("addr"), al=$("ac-list");
+ ai.addEventListener("input",function(){
+  var v=this.value.trim().replace(/^東京都/,""); State.addrText=this.value.trim();
+  if(!v){al.classList.remove("on");return;}
+  var hits=ADDR.filter(function(a){
+   return a.addr.indexOf(v)>=0 || a.near.indexOf(v)>=0 || a.addr.replace(/[都区市町丁目\-]/g,"").indexOf(v.replace(/[都区市町丁目\-]/g,""))>=0;
+  }).slice(0,6);
+  al.innerHTML="";
+  if(!hits.length){
+   al.appendChild(el("div",null,'<div style="padding:10px 12px;font-size:12.5px;color:var(--ink-3);line-height:1.55">演示地址库里没有匹配项。<br>正式版会用 Google Geocoding 解析任意门牌号。</div>'));
+   al.classList.add("on"); return;
+  }
+  hits.forEach(function(a){
+   var b=el("button",null,
+    '<svg class="i" style="color:var(--ink-3)"><use href="#i-pin"/></svg>'+
+    '<span style="display:flex;flex-direction:column;line-height:1.35"><span>'+a.addr+'</span>'+
+    '<span style="font-size:11px;color:var(--ink-3)">'+a.near+'</span></span>');
+   b.addEventListener("click",function(){useAddr(a);});
+   al.appendChild(b);
+  });
+  al.classList.add("on"); syncStar();
+ });
+ $("geo").addEventListener("click",locate);
+ ai.addEventListener("focus",function(){ if(this.value.trim()) this.dispatchEvent(new Event("input")); });
+ document.addEventListener("click",function(e){ if(!e.target.closest(".ac-wrap")) al.classList.remove("on"); });
+ $("save-addr").addEventListener("click",function(){
+  var v=ai.value.trim(); if(!v)return;
+  var i=-1; State.saved.forEach(function(x,j){if(x.addr===v)i=j;});
+  if(i>=0) State.saved.splice(i,1);
+  else State.saved.unshift({addr:v,near:State.origin.near||v,lat:State.origin.lat,lng:State.origin.lng});
+  State.saved=State.saved.slice(0,6);
+  store("saved",State.saved); renderSaved(); syncStar();
+  toast(i>=0?"已从常用地址移除":"已存为常用地址");
+ });
+
+ $("date").addEventListener("change",function(){State.date=this.value;State.batch=0;render();});
+ $("time").addEventListener("change",function(){State.time=this.value;State.batch=0;render();});
+ var tq=$("time-quick");
+ [["今天 12:00",0,"12:00"],["今天 18:30",0,"18:30"],["明天 12:00",1,"12:00"],["明天 18:30",1,"18:30"]].forEach(function(q){
+  var b=el("button","chip",q[0]);
+  b.addEventListener("click",function(){
+   var d=new Date(); d.setDate(d.getDate()+q[1]);
+   State.date=d.toISOString().slice(0,10); State.time=q[2];
+   $("date").value=State.date; $("time").value=State.time;
+   Array.prototype.forEach.call(tq.children,function(c){c.classList.remove("on");});
+   b.classList.add("on"); State.batch=0; render();
+  });
+  tq.appendChild(b);
+ });
+
+ var mr=$("mode-row");
+ MODES.forEach(function(m){
+  var b=el("button",m.k===State.mode?"on":"", '<svg class="i"><use href="#i-'+m.i+'"/></svg><span>'+m.n+'</span>');
+  b.addEventListener("click",function(){
+   State.mode=m.k; State.batch=0;
+   Array.prototype.forEach.call(mr.children,function(c){c.classList.remove("on");});
+   b.classList.add("on"); syncReach(); render();
+  });
+  mr.appendChild(b);
+ });
+
+ var gr=$("genre-row");
+ GENRES.forEach(function(g){
+  var b=el("button","chip",g.n);
+  b.addEventListener("click",function(){
+   var i=State.genres.indexOf(g.c);
+   if(i<0){State.genres.push(g.c);b.classList.add("on");}else{State.genres.splice(i,1);b.classList.remove("on");}
+   $("genre-val").textContent=State.genres.length?"已选 "+State.genres.length+" 类":"不限";
+   State.batch=0; render();
+  });
+  gr.appendChild(b);
+ });
+
+ var bn=$("bmin"),bx=$("bmax");
+ BUDGETS.forEach(function(v,i){
+  var t=(i===0?"~":"")+"¥"+v.toLocaleString("en-US")+(i===BUDGETS.length-1?"+":"");
+  var o1=el("option",null,t);o1.value=v;if(v===State.bmin)o1.selected=true;bn.appendChild(o1);
+  var o2=el("option",null,t);o2.value=v;if(v===State.bmax)o2.selected=true;bx.appendChild(o2);
+ });
+ bn.addEventListener("change",function(){State.bmin=+this.value;if(State.bmin>State.bmax){State.bmax=State.bmin;bx.value=State.bmax;}State.batch=0;render();});
+ bx.addEventListener("change",function(){State.bmax=+this.value;if(State.bmax<State.bmin){State.bmin=State.bmax;bn.value=State.bmin;}State.batch=0;render();});
+
+ $("mins").addEventListener("input",function(){State.mins=+this.value;State.batch=0;syncReach();render();});
+ $("p-minus").addEventListener("click",function(){State.party=Math.max(1,State.party-1);$("party").textContent=State.party;State.batch=0;render();});
+ $("p-plus").addEventListener("click",function(){State.party=Math.min(20,State.party+1);$("party").textContent=State.party;State.batch=0;render();});
+
+ $("f-eaten").addEventListener("click",function(){State.fEaten=!State.fEaten;this.classList.toggle("on",State.fEaten);State.batch=0;render();});
+ $("f-liked").addEventListener("click",function(){State.fLiked=!State.fLiked;this.classList.toggle("on",State.fLiked);State.batch=0;render();});
+ $("reroll").addEventListener("click",function(){State.batch++;render();window.scrollTo({top:0,behavior:"smooth"});});
+
+ syncReach();
+}
+function syncReach(){
+ var m=mode(),R=radius();
+ $("mins-val").textContent=State.mins+" 分钟";
+ $("reach-val").textContent=R>=1000?(R/1000).toFixed(1)+" km":R+" m";
+ $("reach-note").textContent="（"+m.note+"）";
+}
+
+/* ---------- 登录页插画 ---------- */
+$("art-stage").innerHTML='<svg viewBox="0 0 200 150" fill="none">'+
+ '<ellipse cx="100" cy="132" rx="72" ry="8" fill="#463630"/>'+
+ '<path d="M30 62h140c0 40-31 68-70 68S30 102 30 62z" fill="#F4ECDF"/>'+
+ '<ellipse cx="100" cy="62" rx="70" ry="12" fill="#E0D2BE"/>'+
+ '<path d="M42 70h116c0 8-1 15-3 21H45c-2-6-3-13-3-21z" fill="#C98A3C"/>'+
+ '<circle cx="72" cy="82" r="15" fill="#FCF8F1"/><path d="M72 82a15 15 0 0 1 15-15" stroke="#C0431D" stroke-width="5" fill="none"/>'+
+ '<rect x="108" y="70" width="34" height="18" rx="4" fill="#8A6842"/>'+
+ '<path d="M56 40c4-13 17-13 21 0M92 32c4-13 17-13 21 0M128 40c4-13 17-13 21 0" stroke="#6A5850" stroke-width="5" fill="none" stroke-linecap="round"/>'+
+ '<path d="M176 46 152 60" stroke="#A8968B" stroke-width="5" stroke-linecap="round"/>'+
+ '<path d="M180 54 156 68" stroke="#A8968B" stroke-width="5" stroke-linecap="round"/></svg>';
+
+/* ---------- 登录流程 ---------- */
+function enter(label){$("login").classList.add("off");$("app").classList.add("on");$("who").textContent=label;build();render();}
+$("send-code").addEventListener("click",function(){
+ var v=$("email").value.trim();
+ if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){$("email").focus();$("email").style.borderColor="var(--accent)";return;}
+ $("sent-to").textContent=v;$("step-email").style.display="none";$("step-otp").style.display="flex";$("otp").focus();
+});
+$("back-email").addEventListener("click",function(){$("step-otp").style.display="none";$("step-email").style.display="flex";});
+$("resend").addEventListener("click",function(){this.textContent="已重新发送";});
+$("verify").addEventListener("click",function(){
+ if($("otp").value.replace(/\D/g,"").length!==6){$("otp").focus();$("otp").style.borderColor="var(--accent)";return;}
+ enter($("email").value.trim());
+});
+$("email").addEventListener("keydown",function(e){if(e.key==="Enter")$("send-code").click();});
+$("otp").addEventListener("keydown",function(e){if(e.key==="Enter")$("verify").click();});
+$("guest").addEventListener("click",function(){enter("游客");});
+$("signout").addEventListener("click",function(){$("app").classList.remove("on");$("login").classList.remove("off");$("step-otp").style.display="none";$("step-email").style.display="flex";$("otp").value="";});
+$("dr-close").addEventListener("click",closeDrawer);
+$("scrim").addEventListener("click",closeDrawer);
+document.addEventListener("keydown",function(e){if(e.key==="Escape")closeDrawer();});
+})();
+</script>
