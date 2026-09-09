@@ -20,18 +20,19 @@
 ### M1 — 数据管道
 
 - [ ] 申请 HotPepper API Key ← **关键路径，有审核等待，尽早做**
-- [x] 拉取 genre / budget 主数据码表 —— `_shared/master.ts`：有 key 从 master API 拉 + 缓存 24h，失败回落快照；`GET /masters`
-- [~] 抽 100 条真实 `open` 字段人工分析格式 —— `npm run sample:open`（脚本就绪，等 key 跑）；解析器现按 `docs/api-response.md` 样本写
+- [x] 拉取 genre / budget 主数据码表 —— `_shared/master.ts`：从 master API 拉 + 缓存 24h，失败回落快照；`GET /masters`
+- [x] 抽真实 `open` 字段分析格式 —— `npm run sample:open` 跑了 184 条，解析器 status 全 ok；结论见 `docs/api-response.md`
 - [x] 营业时间解析器 + 单元测试 —— `_shared/openHours.ts`，含 `open` / `close` 两个解析器，37 条测试
 - [x] `/search` 管道骨架：可达半径、硬过滤、加权打分、多中心点采样 + 去重、分批 —— `_shared/pipeline.ts`
 - [x] `/search` 契约 + 前端接入 —— 见 `docs/contract.md`；原型 `?api=` 切后端，默认仍是自包含演示数据
 - [x] 本地开发服务器 —— `npm run dev`（Node，无需 Deno / Supabase CLI）
-- [~] 接真实 HotPepper：客户端已写（多中心点并发翻页、按 id 去重、party_capacity 谨慎收窄、错误容忍），
-      等 `npm run check:api` 用真实响应校准字段假设
-- [ ] `npm run sample:open` 跑一批，人工看格式，回填 `openHours.ts` 的正则直到覆盖率 ≥ 85%
+- [x] 接真实 HotPepper：`npm run check:api` 跑通，字段假设已校准（`non_smoking` 多出 `未確認`、
+      budget 码表细分成 17 档、`mobile_access` 有时是广告文案）。原型 `?api=` 已能看真实数据
+- [ ] 打分调优：从繁忙车站搜时 distance / budget / 人气 分都容易顶格，前 5 名区分度低；
+      人气分是 ADR-004 的占位实现，等评分来源拍板一起调（权重服务端可调，不用发版）
 - [ ] Supabase 项目初始化
 - [ ] Edge Function 部署（`supabase/functions/search/index.ts` HTTP 壳已写）+ 24h 缓存
-- [ ] 前端把演示数据整段换成真实数据（真实照片 `photo.pc.l`、真实营业信息）
+- [ ] 前端把演示数据整段换成真实数据（真实照片 `photo.pc.l`、真实营业信息）—— 抽屉已接，卡片缩略图待接
 - [ ] 地理编码：出发地自由文本 → 经纬度（原型现为固定演示地址库；选 geocoder 是另一个决策）
 
 ### M2 — 账号与持久化
