@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { normalizeRequest, runSearch } from "../_shared/pipeline.ts";
+import { _resetGoogle } from "../_shared/google.ts";
 import type { RawShop } from "../_shared/hotpepper.ts";
 import mockData from "../_shared/mock/gourmet-shops.json" with { type: "json" };
 
@@ -110,6 +111,48 @@ test("营业时间无法解析 → 不过滤并在 notes / 卡片标注", async 
   assert.ok(hit, "解析失败的店仍应出现");
   assert.equal(hit!.hours.disclaimer, true);
   assert.ok(res.notes.some((n) => n.includes("营业时间")));
+});
+
+test("Google 评分只补返回的这一批，命中的写进 rating", async () => {
+  _resetGoogle();
+  const gfetch = ((input, init) => {
+    const url = String(input);
+    if (url.includes("places:searchText")) {
+      const q = JSON.parse(init.body).textQuery;
+      // 给 J_MOCK_001 一个匹配（坐标落在其 400m 内），其余不匹配
+      const near = q.includes("とりまる");
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({
+          places: near
+            ? [{
+              id: "g1",
+              location: { latitude: 35.6919, longitude: 139.7031 },
+              rating: 4.4,
+              userRatingCount: 1200,
+              googleMapsUri: "https://maps.google.com/x",
+            }]
+            : [],
+        }),
+      });
+    }
+    return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({}) });
+  }) as typeof fetch;
+
+  const res = await runSearch(req({ maxMinutes: 25 }), {
+    mockShops: MOCK_SHOPS,
+    env: { GOOGLE_PLACES_API_KEY: "k" },
+    googleFetch: gfetch,
+  });
+  const hit = res.results.find((r) => r.id === "J_MOCK_001");
+  assert.ok(hit);
+  assert.equal(hit.rating, 4.4);
+  assert.equal(hit.userRatingCount, 1200);
+  assert.equal(hit.ratingSource, "google");
+  // 没命中的保持 null
+  assert.ok(res.results.some((r) => r.rating === null));
+  assert.ok(res.notes.some((n) => n.includes("Google 评分")));
 });
 
 test("normalizeRequest 校验：缺坐标报 400", () => {

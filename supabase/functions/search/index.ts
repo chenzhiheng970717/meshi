@@ -14,6 +14,7 @@ import {
   runSearch,
 } from "../_shared/pipeline.ts";
 import { getMasters } from "../_shared/master.ts";
+import { createGoogle } from "../_shared/google.ts";
 import type { RawShop } from "../_shared/hotpepper.ts";
 import mockData from "../_shared/mock/gourmet-shops.json" with { type: "json" };
 
@@ -32,6 +33,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
   const key = Deno.env.get("HOTPEPPER_API_KEY") ?? undefined;
+  const gkey = Deno.env.get("GOOGLE_PLACES_API_KEY") ?? undefined;
   const path = new URL(req.url).pathname;
 
   if (req.method === "GET" && path.endsWith("/masters")) {
@@ -39,6 +41,16 @@ Deno.serve(async (req: Request) => {
     return json({ genres: m.genres, budgets: m.budgets, source: m.source }, 200, {
       "Cache-Control": "public, max-age=3600",
     });
+  }
+
+  // GET /geocode?q=<地址> → { lat, lng, formatted } | 404
+  if (req.method === "GET" && path.endsWith("/geocode")) {
+    const q = new URL(req.url).searchParams.get("q") ?? "";
+    const g = createGoogle({ key: gkey });
+    if (!g.enabled) return json({ error: "地理编码未配置" }, 501);
+    const hit = await g.geocode(q);
+    if (!hit) return json({ error: "解析不出这个地址" }, 404);
+    return json(hit, 200, { "Cache-Control": "public, max-age=86400" });
   }
 
   if (req.method !== "POST") {
@@ -49,7 +61,7 @@ Deno.serve(async (req: Request) => {
     const body = await req.json();
     const search = normalizeRequest(body);
     const res = await runSearch(search, {
-      env: { HOTPEPPER_API_KEY: key },
+      env: { HOTPEPPER_API_KEY: key, GOOGLE_PLACES_API_KEY: gkey },
       mockShops: MOCK_SHOPS,
     });
     return json(res, 200, {

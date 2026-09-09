@@ -64,11 +64,18 @@ export interface ShopResult {
   catch: string;
   hours: HoursInfo;
   /**
-   * 合成「人气」分 0..1。ADR-004 未决 —— HotPepper 不返回 rating/reviews，
-   * 这里用照片数 / 有无套餐 / 有无优惠券 合成，仅供打分的人气项使用。
-   * 一旦 ADR-004 拍板，这个字段的来源会变。
+   * 合成「人气」分 0..1。用照片数 / 有无套餐 / 有无优惠券 合成，
+   * 供打分公式的「人气」项使用（对全部候选统一，保证排序公平）。
    */
   popularity: number;
+  /**
+   * Google Places 评分（ADR-004）。只对**返回的这一批**补充，命中不了 / 配额用尽为 null。
+   * 目前只用于展示，不参与排序（要参与排序得给全部候选打分，见 roadmap「打分调优」）。
+   */
+  rating: number | null;
+  userRatingCount: number | null;
+  ratingSource: "google" | null;
+  googleMapsUri: string | null;
   score: number;
   /** 各打分项的加权前原始值 0..1 */
   scoreBreakdown: {

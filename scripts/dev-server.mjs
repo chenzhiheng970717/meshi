@@ -18,6 +18,7 @@ import {
   runSearch,
 } from "../supabase/functions/_shared/pipeline.ts";
 import { getMasters } from "../supabase/functions/_shared/master.ts";
+import { createGoogle } from "../supabase/functions/_shared/google.ts";
 import mockData from "../supabase/functions/_shared/mock/gourmet-shops.json" with { type: "json" };
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -52,6 +53,13 @@ const server = createServer(async (req, res) => {
     return send(res, 200, { genres: m.genres, budgets: m.budgets, source: m.source });
   }
 
+  if (url.pathname === "/geocode") {
+    const g = createGoogle({ key: process.env.GOOGLE_PLACES_API_KEY });
+    if (!g.enabled) return send(res, 501, { error: "地理编码未配置（GOOGLE_PLACES_API_KEY）" });
+    const hit = await g.geocode(url.searchParams.get("q") ?? "");
+    return hit ? send(res, 200, hit) : send(res, 404, { error: "解析不出这个地址" });
+  }
+
   if (url.pathname === "/search") {
     if (req.method !== "POST") {
       return send(res, 405, { error: "只接受 POST" });
@@ -60,7 +68,10 @@ const server = createServer(async (req, res) => {
       const body = await readJson(req);
       const search = normalizeRequest(body);
       const out = await runSearch(search, {
-        env: { HOTPEPPER_API_KEY: process.env.HOTPEPPER_API_KEY },
+        env: {
+          HOTPEPPER_API_KEY: process.env.HOTPEPPER_API_KEY,
+          GOOGLE_PLACES_API_KEY: process.env.GOOGLE_PLACES_API_KEY,
+        },
         mockShops: MOCK_SHOPS,
       });
       return send(res, 200, out);
@@ -89,7 +100,8 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  const mode = process.env.HOTPEPPER_API_KEY ? "真实 HotPepper" : "演示数据 (mock)";
+  const mode = (process.env.HOTPEPPER_API_KEY ? "真实 HotPepper" : "演示数据 (mock)") +
+    (process.env.GOOGLE_PLACES_API_KEY ? " + Google 评分/地理编码" : "");
   console.log(`meshi dev  →  http://localhost:${PORT}  [${mode}]`);
   console.log(`  原型:   http://localhost:${PORT}/?api=http://localhost:${PORT}`);
   console.log(`  接口:   POST http://localhost:${PORT}/search`);

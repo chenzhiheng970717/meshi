@@ -191,6 +191,10 @@ export function scoreShop(
     privateRoom: room,
     coupon: (shop.coupon_urls?.pc ?? "").length > 0,
     catch: shop.catch ?? "",
+    rating: null,
+    userRatingCount: null,
+    ratingSource: null,
+    googleMapsUri: null,
     hours: {
       status: parsedOpen.status,
       todayLabel: oh.todayLabel,

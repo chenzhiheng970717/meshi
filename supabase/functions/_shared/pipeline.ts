@@ -9,6 +9,7 @@ import {
 import { createClient, type RawShop } from "./hotpepper.ts";
 import { haversineM, reachRadiusM } from "./reach.ts";
 import { budgetCodesFor, getMasters } from "./master.ts";
+import { createGoogle } from "./google.ts";
 import {
   type RejectReason,
   scoreShop,
@@ -18,8 +19,10 @@ import {
 const PAGE_SIZE = 5;
 
 export interface RunOptions {
-  env?: { HOTPEPPER_API_KEY?: string };
+  env?: { HOTPEPPER_API_KEY?: string; GOOGLE_PLACES_API_KEY?: string };
   mockShops?: RawShop[];
+  /** 注入 fetch（测试用），传给 Google 客户端 */
+  googleFetch?: typeof fetch;
 }
 
 export function normalizeRequest(body: unknown): SearchRequest {
@@ -169,6 +172,33 @@ export async function runSearch(
   const results = scored
     .slice(batch * PAGE_SIZE, batch * PAGE_SIZE + PAGE_SIZE)
     .map((s) => s.result);
+
+  // Google Places 评分（ADR-004）：只对返回的这一批补充，控制调用量
+  const google = createGoogle({
+    key: opts.env?.GOOGLE_PLACES_API_KEY,
+    fetchImpl: opts.googleFetch,
+  });
+  if (google.enabled && results.length) {
+    const ratings = await google.ratingsFor(
+      results.map((r) => ({ id: r.id, name: r.name, lat: r.lat, lng: r.lng })),
+    );
+    let hit = 0;
+    for (const r of results) {
+      const g = ratings.get(r.id);
+      if (g) {
+        r.rating = g.rating;
+        r.userRatingCount = g.userRatingCount;
+        r.ratingSource = "google";
+        r.googleMapsUri = g.mapsUri || null;
+        hit++;
+      }
+    }
+    if (hit < results.length) {
+      notes.push(
+        `${results.length - hit} 家未匹配到 Google 评分，显示合成人气分`,
+      );
+    }
+  }
 
   return {
     request: { ...req, datetime: when.toISOString() },
