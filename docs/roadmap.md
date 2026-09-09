@@ -20,12 +20,16 @@
 ### M1 — 数据管道
 
 - [ ] 申请 HotPepper API Key ← **关键路径，有审核等待，尽早做**
-- [ ] 拉取 genre / budget 主数据码表
-- [ ] 抽 100 条真实 `open` 字段人工分析格式
-- [ ] 营业时间解析器 + 单元测试
+- [~] 拉取 genre / budget 主数据码表 —— 先放了静态快照（`_shared/mock/*-master.json`），动态拉取待 key
+- [ ] 抽 100 条真实 `open` 字段人工分析格式 —— 待 key；解析器现按 `docs/api-response.md` 的样本写
+- [x] 营业时间解析器 + 单元测试 —— `_shared/openHours.ts`，含 `open` / `close` 两个解析器，37 条测试
+- [x] `/search` 管道骨架：可达半径、硬过滤、加权打分、多中心点采样 + 去重、分批 —— `_shared/pipeline.ts`
+- [x] `/search` 契约 + 前端接入 —— 见 `docs/contract.md`；原型 `?api=` 切后端，默认仍是自包含演示数据
+- [x] 本地开发服务器 —— `npm run dev`（Node，无需 Deno / Supabase CLI）
 - [ ] Supabase 项目初始化
-- [ ] Edge Function `/search`：多中心点采样、去重、过滤、打分、24h 缓存
-- [ ] 前端接入真实数据，替换演示数据
+- [ ] Edge Function 部署（`supabase/functions/search/index.ts` HTTP 壳已写）+ 24h 缓存
+- [ ] 接真实 HotPepper：翻页拉候选（默认排序是广告位，见 api-response.md 坑 #1）、真实照片、genre/budget 动态码表
+- [ ] 前端把演示数据整段换成真实数据（照片、营业信息）
 
 ### M2 — 账号与持久化
 
@@ -60,9 +64,11 @@
 |---|---|---|
 | 🔴 now | 申请 HotPepper API Key | — |
 | 🔴 now | 确认评分数据来源（ADR-004） | 需产品决策 |
-| 🟡 next | 抽样分析 `open` 字段格式 | API Key |
+| 🟡 next | 抽样分析 `open` 字段格式，回填 `openHours.ts` fixture | API Key |
+| 🟡 next | 用真实 key 跑 `/search`，验证候选池 / 字段 / 广告位翻页 | API Key |
 | 🟡 next | 「就这家 → 评价」闭环交互定稿 | 需产品决策 |
 | 🟡 next | 移动端真机复核 | — |
+| 🟢 later | Supabase 项目 + Edge Function 部署 + 24h 缓存 | API Key |
 | 🟢 later | Vite + React 重构 | 界面定稿 |
 
 ---
