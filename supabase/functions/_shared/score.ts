@@ -1,0 +1,239 @@
+// 硬过滤 + 加权打分。
+// 权重与半径参数都在这里，改打分逻辑不用动前端、不用发版。见 CLAUDE.md「推荐算法」。
+
+import type { ShopResult, Transport } from "./contract.ts";
+import type { RawShop } from "./hotpepper.ts";
+import { budgetOverlaps, parseBudgetName } from "./budget.ts";
+import { etaMinutes, haversineM } from "./reach.ts";
+import { evaluateOpen, parseClose, parseOpen } from "./openHours.ts";
+import { synthPopularity } from "./popularity.ts";
+
+export const SCORE_WEIGHTS = {
+  distance: 0.30,
+  genre: 0.25,
+  popularity: 0.20,
+  budget: 0.15,
+  scene: 0.10,
+};
+
+/** 料理 L.O. 提前余量（分钟）。见 CLAUDE.md 硬过滤。 */
+export const LO_MARGIN_MIN = 60;
+
+export interface ScoreContext {
+  originLat: number;
+  originLng: number;
+  transport: Transport;
+  maxMinutes: number;
+  party: number;
+  genres: string[];
+  budgetMin: number;
+  budgetMax: number;
+  when: Date;
+  timeMin: number;
+}
+
+export type RejectReason =
+  | "distance"
+  | "hours"
+  | "capacity"
+  | "budget"
+  | "genre";
+
+export interface ScoredShop {
+  result: ShopResult;
+  /** 排序用的最终分 */
+  score: number;
+}
+
+const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
+
+function parseCapacity(v: number | string): number {
+  const n = typeof v === "number" ? v : Number(String(v).replace(/[^\d.]/g, ""));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function parsePrefix(field: string | undefined): { available: boolean; detail: string } | null {
+  if (!field) return null;
+  const [head, ...rest] = field.split("：");
+  const available = /あり|可|有/.test(head) && !/なし|不可|無/.test(head);
+  return { available, detail: rest.join("：").trim() };
+}
+
+function nonSmokingState(v: string | undefined): ShopResult["nonSmoking"] {
+  if (!v) return "unknown";
+  if (v.includes("全面禁煙")) return "full";
+  if (v.includes("一部禁煙")) return "partial";
+  if (v.includes("禁煙席なし") || v.includes("喫煙可")) return "none";
+  return "unknown";
+}
+
+/**
+ * 对单个候选店做硬过滤 + 打分。
+ * 通过返回 { result, score }；被过滤返回 { reject }。
+ */
+export function scoreShop(
+  shop: RawShop,
+  ctx: ScoreContext,
+): { scored: ScoredShop } | { reject: RejectReason } {
+  const distanceM = haversineM(ctx.originLat, ctx.originLng, shop.lat, shop.lng);
+
+  // --- 硬过滤 ---
+  // 半径由可达时长换算，等价于 eta > maxMinutes；见 reach.reachRadiusM
+  const eta = etaMinutes(ctx.transport, distanceM);
+  if (eta > ctx.maxMinutes) return { reject: "distance" };
+
+  const cap = parseCapacity(shop.party_capacity);
+  if (ctx.party > 0 && cap > 0 && cap < ctx.party) return { reject: "capacity" };
+
+  const bud = parseBudgetName(shop.budget?.name);
+  if (bud && !budgetOverlaps(bud, ctx.budgetMin, ctx.budgetMax)) {
+    return { reject: "budget" };
+  }
+
+  if (ctx.genres.length && !ctx.genres.includes(shop.genre?.code)) {
+    return { reject: "genre" };
+  }
+
+  // 定休日：close 字段里明确的每周定休直接挡掉（不含「不定休 / 第N週」）
+  const targetWeekday = (ctx.when.getDay() + 6) % 7;
+  const closeInfo = parseClose(shop.close);
+  if (closeInfo.closedWeekdays.includes(targetWeekday)) return { reject: "hours" };
+
+  const parsedOpen = parseOpen(shop.open);
+  const oh = evaluateOpen(parsedOpen, ctx.when, ctx.timeMin, LO_MARGIN_MIN);
+  // openAtTarget === false 且能确定 → 过滤；"unknown" → 放行并标注
+  if (oh.openAtTarget === false) return { reject: "hours" };
+  const hoursDisclaimer = oh.openAtTarget === "unknown" ||
+    parsedOpen.status !== "ok" || closeInfo.irregular;
+
+  // --- 加权打分 ---
+  const popularity = synthPopularity(shop);
+  const reqMid = (ctx.budgetMin + ctx.budgetMax) / 2;
+  const reqSpan = Math.max(1, (ctx.budgetMax - ctx.budgetMin) / 2);
+
+  const room = parsePrefix(shop.private_room);
+  const hasCourse = shop.course === "あり";
+  const smoke = nonSmokingState(shop.non_smoking);
+
+  const breakdown = {
+    distance: clamp01(1 - eta / Math.max(1, ctx.maxMinutes)),
+    genre: ctx.genres.length ? 1 : 0.6,
+    popularity,
+    budget: bud ? clamp01(1 - Math.abs(bud.mid - reqMid) / reqSpan) : 0.5,
+    scene: clamp01(
+      0.55 +
+        (room?.available && ctx.party >= 4 ? 0.3 : 0) +
+        (hasCourse && ctx.party >= 4 ? 0.15 : 0) +
+        (smoke === "full" ? 0.05 : 0),
+    ),
+  };
+
+  const score = SCORE_WEIGHTS.distance * breakdown.distance +
+    SCORE_WEIGHTS.genre * breakdown.genre +
+    SCORE_WEIGHTS.popularity * breakdown.popularity +
+    SCORE_WEIGHTS.budget * breakdown.budget +
+    SCORE_WEIGHTS.scene * breakdown.scene;
+
+  const result: ShopResult = {
+    id: shop.id,
+    name: shop.name,
+    genre: { code: shop.genre?.code ?? "", name: shop.genre?.name ?? "" },
+    station: shop.mobile_access || shop.station_name || "",
+    access: shop.access ?? "",
+    lat: shop.lat,
+    lng: shop.lng,
+    distanceM,
+    etaMinutes: Math.round(eta),
+    budget: {
+      code: shop.budget?.code ?? "",
+      name: shop.budget?.name ?? "",
+      average: shop.budget?.average ?? "",
+      mid: bud?.mid ?? 0,
+    },
+    photo: shop.photo?.pc?.l
+      ? {
+        s: shop.photo.pc.s ?? "",
+        m: shop.photo.pc.m ?? "",
+        l: shop.photo.pc.l ?? "",
+      }
+      : null,
+    url: shop.urls?.pc ?? "",
+    card: shop.card === "利用可",
+    nonSmoking: smoke,
+    privateRoom: room,
+    coupon: (shop.coupon_urls?.pc ?? "").length > 0,
+    catch: shop.catch ?? "",
+    hours: {
+      status: parsedOpen.status,
+      todayLabel: oh.todayLabel,
+      lastOrderMin: oh.lastOrderMin,
+      lastOrderLabel: oh.lastOrderMin != null ? minLabel(oh.lastOrderMin) : null,
+      openAtTarget: oh.openAtTarget,
+      disclaimer: hoursDisclaimer,
+    },
+    popularity,
+    score: Number(score.toFixed(4)),
+    scoreBreakdown: {
+      distance: Number(breakdown.distance.toFixed(3)),
+      genre: Number(breakdown.genre.toFixed(3)),
+      popularity: Number(breakdown.popularity.toFixed(3)),
+      budget: Number(breakdown.budget.toFixed(3)),
+      scene: Number(breakdown.scene.toFixed(3)),
+    },
+    why: buildWhy({
+      transport: ctx.transport,
+      eta,
+      bud,
+      reqMid,
+      budgetBreakdown: breakdown.budget,
+      room,
+      party: ctx.party,
+      cap,
+      oh,
+    }),
+  };
+
+  return { scored: { result, score } };
+}
+
+function minLabel(min: number): string {
+  const w = min % 1440;
+  const h = Math.floor(w / 60);
+  const mm = String(w % 60).padStart(2, "0");
+  return `${min >= 1440 ? "翌" : ""}${String(h).padStart(2, "0")}:${mm}`;
+}
+
+const TRANSPORT_LABEL: Record<Transport, string> = {
+  walk: "步行",
+  bike: "自行车",
+  train: "电车",
+  car: "驾车",
+};
+
+function buildWhy(a: {
+  transport: Transport;
+  eta: number;
+  bud: ReturnType<typeof parseBudgetName>;
+  reqMid: number;
+  budgetBreakdown: number;
+  room: { available: boolean; detail: string } | null;
+  party: number;
+  cap: number;
+  oh: ReturnType<typeof evaluateOpen>;
+}): string[] {
+  const bits: string[] = [];
+  bits.push(`${TRANSPORT_LABEL[a.transport]} 约 ${Math.round(a.eta)} 分钟`);
+  if (a.bud) {
+    if (a.budgetBreakdown > 0.75) bits.push(`人均 ¥${a.bud.mid} 正好在预算内`);
+    else if (a.bud.mid < a.reqMid) bits.push(`人均 ¥${a.bud.mid}，比预算省`);
+  }
+  if (a.room?.available && a.party >= 4) {
+    bits.push(a.room.detail ? `有包间（${a.room.detail.slice(0, 20)}）` : "有包间");
+  } else if (a.cap >= a.party + 4) {
+    bits.push("位子宽松");
+  }
+  if (a.oh.todayLabel && a.oh.lastOrderMin != null) {
+    bits.push(`营业到 ${a.oh.todayLabel.split("–")[1]}，L.O. ${minLabel(a.oh.lastOrderMin)}`);
+  }
+  return bits;
+}

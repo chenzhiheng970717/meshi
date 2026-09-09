@@ -1,0 +1,10 @@
+{
+  "name": "meshi",
+  "private": true,
+  "type": "module",
+  "description": "东京餐厅推荐 — /search Edge Function 与营业时间解析器",
+  "scripts": {
+    "test": "node --test \"supabase/functions/**/*.test.ts\"",
+    "dev": "node scripts/dev-server.mjs"
+  }
+}
