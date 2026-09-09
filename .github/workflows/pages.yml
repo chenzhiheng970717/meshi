@@ -1,0 +1,39 @@
+# 把 prototype/ 部署到 GitHub Pages，这样评审时有个可以直接打开的链接。
+#
+# 首次使用前，去仓库 Settings → Pages → Source 选 "GitHub Actions"。
+name: Deploy prototype to Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'prototype/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: prototype
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
