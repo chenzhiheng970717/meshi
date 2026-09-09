@@ -54,7 +54,10 @@ export interface GourmetClient {
 
 const ENDPOINT = "https://webservice.recruit.co.jp/hotpepper/gourmet/v1/";
 /** 拉够候选就停，避免无谓请求。见 docs/api-response.md 坑 #1。 */
-const MAX_CANDIDATES = 400;
+const MAX_CANDIDATES = 500;
+/** 每个中心点最多翻几页（每页 100）。默认排序是「おすすめ順」＝掲載プラン，
+    翻深一点才能盖过广告位；再深收益递减。 */
+const MAX_PAGES_PER_CENTER = 3;
 
 export function createClient(env: {
   HOTPEPPER_API_KEY?: string;
@@ -77,36 +80,64 @@ class RealClient implements GourmetClient {
     const code = rangeCode(Math.min(q.radiusM, 3000));
     const byId = new Map<string, RawShop>();
 
-    for (const c of centers) {
-      let start = 1;
-      while (byId.size < MAX_CANDIDATES) {
-        const url = new URL(ENDPOINT);
-        url.searchParams.set("key", this.key);
-        url.searchParams.set("format", "json");
-        url.searchParams.set("lat", String(c.lat));
-        url.searchParams.set("lng", String(c.lng));
-        url.searchParams.set("range", String(code));
-        url.searchParams.set("count", "100");
-        url.searchParams.set("start", String(start));
-        if (q.genres.length) url.searchParams.set("genre", q.genres.join(","));
-        if (q.budgetCodes.length) {
-          url.searchParams.set("budget", q.budgetCodes.slice(0, 2).join(","));
-        }
-        if (q.party > 0) url.searchParams.set("party_capacity", String(q.party));
-
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HotPepper ${res.status}`);
-        const json = await res.json();
-        const results = json?.results;
-        const shops: RawShop[] = (results?.shop ?? []).map(normalizeRawShop);
-        for (const s of shops) byId.set(s.id, s);
-
-        const available = Number(results?.results_available ?? 0);
-        start += 100;
-        if (start > available || shops.length === 0) break;
+    // 多中心点并发，每个中心内部翻页（顺序）。见 ADR-003。
+    const perCenter = await Promise.all(
+      centers.map((c) => this.gatherCenter(c, code, q)),
+    );
+    for (const shops of perCenter) {
+      for (const s of shops) {
+        if (byId.size >= MAX_CANDIDATES && !byId.has(s.id)) continue;
+        byId.set(s.id, s);
       }
     }
     return [...byId.values()];
+  }
+
+  private async gatherCenter(
+    c: { lat: number; lng: number },
+    code: number,
+    q: GourmetQuery,
+  ): Promise<RawShop[]> {
+    const out: RawShop[] = [];
+    for (let page = 0; page < MAX_PAGES_PER_CENTER; page++) {
+      const url = new URL(ENDPOINT);
+      url.searchParams.set("key", this.key);
+      url.searchParams.set("format", "json");
+      url.searchParams.set("lat", String(c.lat));
+      url.searchParams.set("lng", String(c.lng));
+      url.searchParams.set("range", String(code));
+      url.searchParams.set("count", "100");
+      url.searchParams.set("start", String(page * 100 + 1));
+      if (q.genres.length) url.searchParams.set("genre", q.genres.join(","));
+      if (q.budgetCodes.length) {
+        url.searchParams.set("budget", q.budgetCodes.slice(0, 2).join(","));
+      }
+      // party_capacity 会把「无人数数据」的店也筛掉，只在 3 人以上时才收窄
+      if (q.party >= 3) {
+        url.searchParams.set("party_capacity", String(q.party));
+      }
+
+      let json: any;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HotPepper ${res.status}`);
+        json = await res.json();
+      } catch (err) {
+        console.error("グルメサーチ 请求失败:", (err as Error).message);
+        break; // 该中心点放弃，其他中心点的结果照用
+      }
+      const results = json?.results;
+      if (results?.error) {
+        console.error("グルメサーチ error:", JSON.stringify(results.error));
+        break;
+      }
+      const shops: RawShop[] = (results?.shop ?? []).map(normalizeRawShop);
+      out.push(...shops);
+
+      const available = Number(results?.results_available ?? 0);
+      if (shops.length < 100 || (page + 1) * 100 >= available) break;
+    }
+    return out;
   }
 }
 

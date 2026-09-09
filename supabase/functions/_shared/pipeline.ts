@@ -8,6 +8,7 @@ import {
 } from "./contract.ts";
 import { createClient, type RawShop } from "./hotpepper.ts";
 import { haversineM, reachRadiusM } from "./reach.ts";
+import { budgetCodesFor, getMasters } from "./master.ts";
 import {
   type RejectReason,
   scoreShop,
@@ -19,8 +20,6 @@ const PAGE_SIZE = 5;
 export interface RunOptions {
   env?: { HOTPEPPER_API_KEY?: string };
   mockShops?: RawShop[];
-  /** genre 名→码，budget 请求区间→码。缺省用简单映射。 */
-  budgetCodesFor?: (min: number, max: number) => string[];
 }
 
 export function normalizeRequest(body: unknown): SearchRequest {
@@ -70,28 +69,6 @@ function clampNum(v: unknown, lo: number, hi: number, dflt: number): number {
   return Math.max(lo, Math.min(hi, n));
 }
 
-function defaultBudgetCodes(min: number, max: number): string[] {
-  // 检索用予算マスタ 的近似区间。正式版从 master API 动态拉取后替换。
-  const table: Array<[string, number, number]> = [
-    ["B009", 0, 500],
-    ["B010", 501, 1000],
-    ["B011", 1001, 1500],
-    ["B001", 1501, 2000],
-    ["B002", 2001, 3000],
-    ["B003", 3001, 4000],
-    ["B008", 4001, 5000],
-    ["B004", 5001, 7000],
-    ["B005", 7001, 10000],
-    ["B006", 10001, 15000],
-    ["B012", 15001, 20000],
-    ["B007", 20001, 30000],
-    ["B013", 30001, 999999],
-  ];
-  return table
-    .filter(([, lo, hi]) => lo <= max && hi >= min)
-    .map(([code]) => code)
-    .slice(0, 2);
-}
 
 export async function runSearch(
   req: SearchRequest,
@@ -101,12 +78,13 @@ export async function runSearch(
   const timeMin = when.getHours() * 60 + when.getMinutes();
   const radiusM = reachRadiusM(req.transport, req.maxMinutes);
 
+  const key = opts.env?.HOTPEPPER_API_KEY;
   const client = createClient({
-    HOTPEPPER_API_KEY: opts.env?.HOTPEPPER_API_KEY,
+    HOTPEPPER_API_KEY: key,
     mockShops: opts.mockShops,
   });
 
-  const budgetCodesFor = opts.budgetCodesFor ?? defaultBudgetCodes;
+  const masters = await getMasters(key);
 
   const notes: string[] = [];
   const rejected = {
@@ -128,7 +106,7 @@ export async function runSearch(
       lng: req.origin.lng,
       radiusM,
       genres: req.genres,
-      budgetCodes: budgetCodesFor(req.budgetMin, req.budgetMax),
+      budgetCodes: budgetCodesFor(masters.budgets, req.budgetMin, req.budgetMax),
       party: req.party,
     });
   }
@@ -181,6 +159,8 @@ export async function runSearch(
   }
   if (client.source === "mock") {
     notes.push("数据来源：演示数据（未接入 HotPepper）。店铺、营业信息均为示例");
+  } else if (masters.source === "snapshot") {
+    notes.push("genre / budget 码表拉取失败，暂用快照");
   }
 
   const total = scored.length;

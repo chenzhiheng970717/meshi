@@ -79,11 +79,17 @@ score = 0.30·距离 + 0.25·口味 + 0.20·人气 + 0.15·预算 + 0.10·场景
 
 ---
 
+## 其它接口
+
+`GET /masters` → `{ genres: [{code,name}], budgets: [{code,name}], source: "hotpepper"|"snapshot" }`
+—— genre / budget 码表。有 key 时从 HotPepper 的 ジャンルマスタ / 検索用予算マスタ 拉取，
+进程内缓存 24h，拉失败回落到 `_shared/mock/*-master.json`。
+
 ## 本地开发
 
 ```bash
 npm run dev          # http://localhost:8787，无需 Deno / Supabase CLI
-npm test             # 解析器 + 打分 + 管道的单元测试
+npm test             # 解析器 + 打分 + 管道的单元测试（37 条）
 
 # 原型连本地后端：
 open "http://localhost:8787/?api=http://localhost:8787"
@@ -92,6 +98,19 @@ open "http://localhost:8787/?api=off"
 ```
 
 `?api=` 会记进 localStorage；不带参数、且没设过的话，原型用内置演示数据（可直接双击打开）。
+
+## 接真实 HotPepper
+
+把 key 填进 `.env` 的 `HOTPEPPER_API_KEY`（`.env` 已 gitignore，`npm run` 会自动加载）：
+
+```bash
+npm run check:api    # 验证 key + 审计真实字段形态（card / non_smoking / photo / budget.average …）
+npm run sample:open  # 抓 ~120 条真实 open/close → fixtures/open-strings.json，并报当前解析器覆盖率
+npm run dev          # 之后 dev-server 自动走真实 API
+```
+
+`check:api` / `sample:open` 都不打印 key、不打印带 key 的完整 URL。
+解析器覆盖率 < 85% 时，先照 `fixtures/open-strings.json` 里的 failed 样本改 `openHours.ts` 的正则，再接主流程。
 
 ## 部署（key 到位后）
 

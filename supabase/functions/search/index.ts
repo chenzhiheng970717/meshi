@@ -13,6 +13,7 @@ import {
   normalizeRequest,
   runSearch,
 } from "../_shared/pipeline.ts";
+import { getMasters } from "../_shared/master.ts";
 import type { RawShop } from "../_shared/hotpepper.ts";
 import mockData from "../_shared/mock/gourmet-shops.json" with { type: "json" };
 
@@ -29,6 +30,17 @@ const Deno: any = (globalThis as any).Deno;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+
+  const key = Deno.env.get("HOTPEPPER_API_KEY") ?? undefined;
+  const path = new URL(req.url).pathname;
+
+  if (req.method === "GET" && path.endsWith("/masters")) {
+    const m = await getMasters(key);
+    return json({ genres: m.genres, budgets: m.budgets, source: m.source }, 200, {
+      "Cache-Control": "public, max-age=3600",
+    });
+  }
+
   if (req.method !== "POST") {
     return json({ error: "只接受 POST" }, 405);
   }
@@ -37,7 +49,7 @@ Deno.serve(async (req: Request) => {
     const body = await req.json();
     const search = normalizeRequest(body);
     const res = await runSearch(search, {
-      env: { HOTPEPPER_API_KEY: Deno.env.get("HOTPEPPER_API_KEY") ?? undefined },
+      env: { HOTPEPPER_API_KEY: key },
       mockShops: MOCK_SHOPS,
     });
     return json(res, 200, {

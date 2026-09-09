@@ -17,6 +17,7 @@ import {
   normalizeRequest,
   runSearch,
 } from "../supabase/functions/_shared/pipeline.ts";
+import { getMasters } from "../supabase/functions/_shared/master.ts";
 import mockData from "../supabase/functions/_shared/mock/gourmet-shops.json" with { type: "json" };
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -44,6 +45,11 @@ const server = createServer(async (req, res) => {
   if (req.method === "OPTIONS") {
     res.writeHead(204, CORS).end();
     return;
+  }
+
+  if (url.pathname === "/masters") {
+    const m = await getMasters(process.env.HOTPEPPER_API_KEY);
+    return send(res, 200, { genres: m.genres, budgets: m.budgets, source: m.source });
   }
 
   if (url.pathname === "/search") {

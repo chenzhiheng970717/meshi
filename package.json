@@ -5,6 +5,8 @@
   "description": "东京餐厅推荐 — /search Edge Function 与营业时间解析器",
   "scripts": {
     "test": "node --test \"supabase/functions/**/*.test.ts\"",
-    "dev": "node scripts/dev-server.mjs"
+    "dev": "node --env-file-if-exists=.env scripts/dev-server.mjs",
+    "check:api": "node --env-file-if-exists=.env scripts/check-api.mjs",
+    "sample:open": "node --env-file-if-exists=.env scripts/sample-open.mjs"
   }
 }
