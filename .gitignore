@@ -9,6 +9,11 @@
 secrets/
 .supabase/
 
+# === HotPepper 真实数据：不得落库 / 复制（Recruit 利用規約，缓存 ≤ 24h）===
+# 抓取的真实店铺数据只留在本地做解析调试，不进仓库。
+fixtures/open-strings.json
+fixtures/*-real.json
+
 # === 依赖与构建产物 ===
 node_modules/
 dist/

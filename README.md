@@ -30,8 +30,10 @@
 |---|---|
 | 界面原型（含打分引擎、标记、分批） | ✅ v0.3 |
 | 邮箱 OTP 登录 | 🔨 仅界面 |
-| HotPepper API 接入 | ⬜ 未开始 |
-| Supabase Edge Function 代理 | ⬜ 未开始 |
+| `/search` 契约 + 管道骨架（解析器 / 打分 / 采样 / 分批） | ✅ 演示数据，见 [docs/contract.md](docs/contract.md) |
+| 营业时间解析器 + 单元测试 | ✅ `supabase/functions/_shared/openHours.ts` |
+| HotPepper API 接入 | ⬜ 等 API Key |
+| Supabase Edge Function 部署 | 🔨 HTTP 壳已写，未部署 |
 | 部署 | ⬜ 未开始 |
 
 ## 快速开始
@@ -49,6 +51,16 @@ python3 -m http.server 8000 --directory prototype
 然后打开 http://localhost:8000 。登录页输入任意 6 位数字，或点「先随便逛逛」。
 
 > 原型内的店铺、评分、评论数**全部是演示数据**，不是真实营业信息。
+
+想连本地后端跑 `/search` 契约（仍是演示数据，但走真实管道：解析 / 过滤 / 打分 / 分批）：
+
+```bash
+npm run dev    # http://localhost:8787，无需 Deno / Supabase CLI
+npm test       # 解析器 + 打分 + 管道单测
+
+open "http://localhost:8787/?api=http://localhost:8787"   # 原型连后端
+open "http://localhost:8787/?api=off"                     # 切回自包含演示
+```
 
 ## 技术选型
 
