@@ -92,6 +92,8 @@ export interface GoogleClient {
   enabled: boolean;
   /** 地址 → 坐标。配额用尽 / 未配置返回 null。 */
   geocode(address: string): Promise<GeoResult | null>;
+  /** 坐标 → 地址（反向）。 */
+  reverseGeocode(lat: number, lng: number): Promise<GeoResult | null>;
   /** 一批店按 名称+坐标 补评分。命中不了或配额用尽的条目不在返回 Map 里。 */
   ratingsFor(
     shops: Array<{ id: string; name: string; lat: number; lng: number }>,
@@ -107,6 +109,7 @@ export function createGoogle(cfg: GoogleConfig): GoogleClient {
     return {
       enabled: false,
       geocode: () => Promise.resolve(null),
+      reverseGeocode: () => Promise.resolve(null),
       ratingsFor: () => Promise.resolve(new Map()),
     };
   }
@@ -144,6 +147,49 @@ export function createGoogle(cfg: GoogleConfig): GoogleClient {
       return out;
     } catch (err) {
       console.error("Google Geocoding 失败:", (err as Error).message);
+      return null;
+    }
+  }
+
+  async function reverseGeocode(
+    lat: number,
+    lng: number,
+  ): Promise<GeoResult | null> {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    // 缓存按 ~11m 网格，附近坐标共享
+    const ck = `rev:${lat.toFixed(4)},${lng.toFixed(4)}`;
+    const cached = cacheGet<GeoResult | null>(ck);
+    if (cached !== undefined) return cached;
+    if (!tryConsume("geocode", cap)) {
+      console.error("Google Geocoding 当日计数已达上限，降级");
+      return null;
+    }
+    const u = new URL(GEOCODE_URL);
+    u.searchParams.set("latlng", `${lat},${lng}`);
+    u.searchParams.set("key", key!);
+    u.searchParams.set("language", "ja");
+    // 精确到门牌 / 街区，不要国家 / 都道府県 这种大范围结果
+    u.searchParams.set(
+      "result_type",
+      "street_address|premise|subpremise|route",
+    );
+    try {
+      const res = await doFetch(u);
+      const json = await res.json();
+      const r = (json.results ?? [])[0];
+      if (json.status !== "OK" || !r) {
+        cacheSet(ck, null);
+        return null;
+      }
+      const out: GeoResult = {
+        lat: r.geometry.location.lat,
+        lng: r.geometry.location.lng,
+        formatted: r.formatted_address ?? "",
+      };
+      cacheSet(ck, out);
+      return out;
+    } catch (err) {
+      console.error("Google 反向地理编码失败:", (err as Error).message);
       return null;
     }
   }
@@ -232,5 +278,5 @@ export function createGoogle(cfg: GoogleConfig): GoogleClient {
     }
   }
 
-  return { enabled: true, geocode, ratingsFor };
+  return { enabled: true, geocode, reverseGeocode, ratingsFor };
 }

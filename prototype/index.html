@@ -603,6 +603,13 @@ var API_BASE=null, API_TOKEN="";
  }catch(e){}
 })();
 function apiHeaders(extra){ var h=extra||{}; if(API_TOKEN) h["X-App-Token"]=API_TOKEN; return h; }
+/* 拼端点。Supabase 是 .../functions/v1/search，子路由在函数名之后（.../search/geocode）；
+   本地 dev-server 是 /search、/geocode 平级。API_BASE 以 /search 结尾就按前者。 */
+function endpoint(name){
+ if(!API_BASE) return null;
+ if(/\/search$/.test(API_BASE)) return name ? API_BASE+"/"+name : API_BASE;
+ return name ? API_BASE+"/"+name : API_BASE+"/search";
+}
 var lastResp=null;
 
 function buildRequest(){
@@ -640,7 +647,7 @@ function mapRej(x){return {dist:x.distance,time:x.hours,cap:x.capacity,bud:x.bud
 /* 统一形状：{rows, rej, total, batches, batch, notes, source, sliceLocally} */
 function search(){
  if(API_BASE){
-  return fetch(API_BASE+"/search",{method:"POST",headers:apiHeaders({"content-type":"application/json"}),
+  return fetch(endpoint(""),{method:"POST",headers:apiHeaders({"content-type":"application/json"}),
     body:JSON.stringify(buildRequest())})
    .then(function(r){if(!r.ok)throw new Error("/search "+r.status);return r.json();})
    .then(function(resp){
@@ -931,15 +938,34 @@ function useAddr(a){
  $("addr").value=a.addr; $("ac-list").classList.remove("on");
  State.batch=0; syncStar(); render();
 }
+/* Google 返回的 formatted_address 收拾干净：去「日本、」「〒xxx-xxxx」，
+   全角数字转半角，「丁目/番/号」转连字符，和演示地址库风格一致 */
+function cleanAddr(s){
+ var t=String(s||"").replace(/^日本[、,\s]*/,"").replace(/〒?\s*[\d０-９]{3}-?[\d０-９]{4}\s*/,"");
+ t=t.replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0);});
+ t=t.replace(/丁目/g,"-").replace(/番地?/g,"-").replace(/号/g,"").replace(/[−–—]/g,"-").replace(/-+/g,"-").replace(/-\s*$/,"");
+ return t.trim();
+}
+/* 常用地址 chip 的短标签：再去掉「東京都」前缀，截断 */
+function shortAddr(s){
+ var t=cleanAddr(s).replace(/^東京都\s*/,"").replace(/\s+/g," ");
+ return t.length>18 ? t.slice(0,18)+"…" : (t||"地址");
+}
+/* 从坐标解析地址（反向）后落地 */
+function setFromGeo(j,lat,lng){
+ var full=cleanAddr(j&&j.formatted)|| (lat.toFixed(4)+", "+lng.toFixed(4));
+ useAddr({addr:full,near:shortAddr(j&&j.formatted)||"当前位置",
+  lat:(j&&j.lat)||lat,lng:(j&&j.lng)||lng});
+}
 /* 自由文本地址 → 经纬度（Google Geocoding，服务端代理）。仅 ?api= 模式。 */
 function geocodeAddr(raw,btn){
  if(btn) btn.textContent="解析中…";
- fetch(API_BASE+"/geocode?q="+encodeURIComponent(raw),{headers:apiHeaders()})
+ fetch(endpoint("geocode")+"?q="+encodeURIComponent(raw),{headers:apiHeaders()})
   .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
   .then(function(x){
    if(!x.ok){ toast(x.j.error||"解析不出这个地址，换个写法试试"); return; }
-   useAddr({addr:x.j.formatted||raw,near:"Google 定位",lat:x.j.lat,lng:x.j.lng});
-   toast("已定位到 "+(x.j.formatted||raw));
+   setFromGeo(x.j,x.j.lat,x.j.lng);
+   toast("已定位到 "+cleanAddr(x.j.formatted||raw));
   })
   .catch(function(){ toast("地理编码请求失败"); });
 }
@@ -947,12 +973,23 @@ function syncStar(){
  var v=$("addr").value.trim();
  $("save-addr").classList.toggle("on", State.saved.some(function(x){return x.addr===v;}));
 }
-/* 定位：真实浏览器定位；演示数据只覆盖东京，超出范围时贴到最近的演示区域 */
+/* 定位：真实浏览器定位。接了后端就反向地理编码显示地址；
+   没接后端（演示模式）只覆盖东京，超范围时贴到最近的演示区域。 */
 function locate(){
  if(!navigator.geolocation){toast("这个浏览器不支持定位，请手动输入地址");return;}
  toast("正在获取当前位置…");
  navigator.geolocation.getCurrentPosition(function(pos){
   var la=pos.coords.latitude, ln=pos.coords.longitude;
+  if(API_BASE){
+   fetch(endpoint("geocode")+"?lat="+la+"&lng="+ln,{headers:apiHeaders()})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(j){
+     setFromGeo(j,la,ln);
+     toast(j?"已定位到 "+cleanAddr(j.formatted):"已用当前坐标（地址解析失败）");
+    })
+    .catch(function(){ setFromGeo(null,la,ln); toast("已用当前坐标"); });
+   return;
+  }
   var d=dist(la,ln,TOKYO.lat,TOKYO.lng);
   if(d>60000){
    var near=ADDR.slice().sort(function(x,y){return dist(la,ln,x.lat,x.lng)-dist(la,ln,y.lat,y.lng);})[0];
@@ -960,10 +997,7 @@ function locate(){
    toast("已获取你的位置，但演示数据只覆盖东京，已切换到 "+near.near);
    return;
   }
-  State.origin={addr:"当前位置",near:"GPS 定位",lat:la,lng:ln};
-  State.addrText="当前位置";
-  $("addr").value="当前位置（"+la.toFixed(4)+", "+ln.toFixed(4)+"）";
-  State.batch=0; syncStar(); render();
+  useAddr({addr:"当前位置（"+la.toFixed(4)+", "+ln.toFixed(4)+"）",near:"当前位置",lat:la,lng:ln});
   toast("已定位到当前位置");
  },function(err){
   toast(err.code===1?"定位被拒绝，请在浏览器里允许位置权限，或手动输入地址":"定位失败，请手动输入地址");
@@ -1014,7 +1048,10 @@ function build(){
   var v=ai.value.trim(); if(!v)return;
   var i=-1; State.saved.forEach(function(x,j){if(x.addr===v)i=j;});
   if(i>=0) State.saved.splice(i,1);
-  else State.saved.unshift({addr:v,near:State.origin.near||v,lat:State.origin.lat,lng:State.origin.lng});
+  else{
+   var lbl=(State.origin.addr===v && State.origin.near) ? State.origin.near : shortAddr(v);
+   State.saved.unshift({addr:v,near:lbl,lat:State.origin.lat,lng:State.origin.lng});
+  }
   State.saved=State.saved.slice(0,6);
   store("saved",State.saved); renderSaved(); syncStar();
   toast(i>=0?"已从常用地址移除":"已存为常用地址");
