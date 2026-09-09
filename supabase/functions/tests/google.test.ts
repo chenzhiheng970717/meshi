@@ -48,6 +48,35 @@ test("geocode: 正常解析 + 缓存（第二次不再请求）", async () => {
   assert.equal(calls, 1, "第二次应命中缓存");
 });
 
+test("reverseGeocode: 坐标 → 地址 + 缓存", async () => {
+  _resetGoogle();
+  let calls = 0;
+  const g = createGoogle({
+    key: "k",
+    fetchImpl: fakeFetch((url) => {
+      calls++;
+      assert.match(url, /latlng=35\.6912%2C139\.702/);
+      return {
+        status: "OK",
+        results: [{
+          geometry: { location: { lat: 35.6912, lng: 139.702 } },
+          formatted_address: "日本、〒160-0022 東京都新宿区新宿３丁目３８−１",
+        }],
+      };
+    }),
+  });
+  const a = await g.reverseGeocode(35.6912, 139.702);
+  assert.equal(a?.formatted, "日本、〒160-0022 東京都新宿区新宿３丁目３８−１");
+  await g.reverseGeocode(35.69121, 139.70201); // 同网格
+  assert.equal(calls, 1);
+});
+
+test("reverseGeocode: 非法坐标 → null", async () => {
+  _resetGoogle();
+  const g = createGoogle({ key: "k", fetchImpl: fakeFetch(() => ({})) });
+  assert.equal(await g.reverseGeocode(NaN, 139), null);
+});
+
 test("geocode: ZERO_RESULTS → null（也缓存）", async () => {
   _resetGoogle();
   const g = createGoogle({

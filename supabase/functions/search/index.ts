@@ -51,13 +51,17 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  // GET /geocode?q=<地址> → { lat, lng, formatted } | 404
+  // GET /geocode?q=<地址>  或  ?lat=&lng=（反向）  → { lat, lng, formatted } | 404
   if (req.method === "GET" && path.endsWith("/geocode")) {
-    const q = new URL(req.url).searchParams.get("q") ?? "";
+    const sp = new URL(req.url).searchParams;
     const g = createGoogle({ key: gkey });
     if (!g.enabled) return json({ error: "地理编码未配置" }, 501);
-    const hit = await g.geocode(q);
-    if (!hit) return json({ error: "解析不出这个地址" }, 404);
+    const lat = Number(sp.get("lat"));
+    const lng = Number(sp.get("lng"));
+    const hit = sp.has("lat") && sp.has("lng")
+      ? await g.reverseGeocode(lat, lng)
+      : await g.geocode(sp.get("q") ?? "");
+    if (!hit) return json({ error: "解析不出这个位置" }, 404);
     return json(hit, 200, { "Cache-Control": "public, max-age=86400" });
   }
 

@@ -59,11 +59,14 @@ const server = createServer(async (req, res) => {
     return send(res, 200, { genres: m.genres, budgets: m.budgets, source: m.source });
   }
 
-  if (url.pathname === "/geocode") {
+  if (url.pathname === "/geocode" || url.pathname === "/search/geocode") {
     const g = createGoogle({ key: process.env.GOOGLE_PLACES_API_KEY });
     if (!g.enabled) return send(res, 501, { error: "地理编码未配置（GOOGLE_PLACES_API_KEY）" });
-    const hit = await g.geocode(url.searchParams.get("q") ?? "");
-    return hit ? send(res, 200, hit) : send(res, 404, { error: "解析不出这个地址" });
+    const sp = url.searchParams;
+    const hit = sp.has("lat") && sp.has("lng")
+      ? await g.reverseGeocode(Number(sp.get("lat")), Number(sp.get("lng")))
+      : await g.geocode(sp.get("q") ?? "");
+    return hit ? send(res, 200, hit) : send(res, 404, { error: "解析不出这个位置" });
   }
 
   if (url.pathname === "/search") {
