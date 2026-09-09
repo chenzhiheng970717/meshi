@@ -28,12 +28,13 @@
 - [x] 本地开发服务器 —— `npm run dev`（Node，无需 Deno / Supabase CLI）
 - [x] 接真实 HotPepper：`npm run check:api` 跑通，字段假设已校准（`non_smoking` 多出 `未確認`、
       budget 码表细分成 17 档、`mobile_access` 有时是广告文案）。原型 `?api=` 已能看真实数据
-- [ ] 打分调优：从繁忙车站搜时 distance / budget / 人气 分都容易顶格，前 5 名区分度低；
-      人气分是 ADR-004 的占位实现，等评分来源拍板一起调（权重服务端可调，不用发版）
+- [ ] **Google Cloud 配额熔断**（ADR-004/007）← 启用 Google API 当天必做：Places 200/天、Geocoding 500/天上限
+- [ ] 接 Google Places 取 `rating` / `userRatingCount`（服务端 + 24h 缓存 + 当日调用硬上限），替换合成人气分展示
+- [ ] 接 Google Geocoding：出发地自由文本 → 经纬度，替换固定演示地址库
+- [ ] 打分调优：从繁忙车站搜时 distance / budget / 人气 分都容易顶格，前 5 名区分度低（等 Google 评分接进来一起调，权重服务端可调）
 - [ ] Supabase 项目初始化
 - [ ] Edge Function 部署（`supabase/functions/search/index.ts` HTTP 壳已写）+ 24h 缓存
 - [ ] 前端把演示数据整段换成真实数据（真实照片 `photo.pc.l`、真实营业信息）—— 抽屉已接，卡片缩略图待接
-- [ ] 地理编码：出发地自由文本 → 经纬度（原型现为固定演示地址库；选 geocoder 是另一个决策）
 
 ### M2 — 账号与持久化
 
@@ -66,21 +67,24 @@
 
 | 优先级 | 事项 | 阻塞 |
 |---|---|---|
-| 🔴 now | 申请 HotPepper API Key | — |
-| 🔴 now | 确认评分数据来源（ADR-004） | 需产品决策 |
-| 🟡 next | 抽样分析 `open` 字段格式，回填 `openHours.ts` fixture | API Key |
-| 🟡 next | 用真实 key 跑 `/search`，验证候选池 / 字段 / 广告位翻页 | API Key |
+| 🔴 now | Google Cloud Console 设配额熔断（Places 200/天、Geocoding 500/天） | 需先建 GCP 项目 |
+| 🔴 now | Google key 填进 `.env` 的 `GOOGLE_PLACES_API_KEY` | 上一条 |
+| 🟡 next | 接 Google Places 评分 + Geocoding（服务端 + 缓存 + 当日硬上限） | Google key |
+| 🟡 next | 打分调优（繁忙车站前 5 名区分度低） | Google 评分接进来 |
 | 🟡 next | 「就这家 → 评价」闭环交互定稿 | 需产品决策 |
 | 🟡 next | 移动端真机复核 | — |
-| 🟢 later | Supabase 项目 + Edge Function 部署 + 24h 缓存 | API Key |
+| 🟢 later | Supabase 项目 + Edge Function 部署 + 24h 缓存 | — |
 | 🟢 later | Vite + React 重构 | 界面定稿 |
+
+✅ 已完成：申请 HotPepper Key、确认评分来源（ADR-004→Google Places）、`open` 字段抽样分析、
+真实 key 跑通 `/search`、地理编码选型（ADR-007→Google Geocoding）。
 
 ---
 
 ## 待决策问题
 
-**1. 评分从哪来？** HotPepper 不返回。三个选项见 [ADR-004](decisions.md#adr-004)。
+**1. 评分从哪来？** ✅ 已定：Google Places（ADR-004）。前提是先设 Google 配额熔断。
 
 **2.「就这家」和「吃过」怎么联动？** 现在两者独立。可能的闭环：点了「就这家」→ 到了就餐时间之后 → 提示「今晚去了 XX 吗？」→ 自动标记「吃过」并请求打分（喜欢 / 不喜欢）。这样标记数据能自然积累，不需要用户主动想起来。需要确认是否要做时间触发的提示。
 
-**3. 照片。** 原型用的是按分类画的矢量插画（明确标了「示例图」）。正式版用 HotPepper 返回的 `photo.pc.l`。但插画风格和整体视觉挺搭——是否在无照片的店上保留插画作为兜底？
+**3. 照片。** ✅ 已定：正式版用真实照片（HotPepper `photo.pc.l`）。无照片的店保留矢量插画作兜底（风格和整体视觉搭）。**注意**：HotPepper 最大图只有 238px 宽，详情页做不了大图 hero（见 api-response.md 坑 #2）。

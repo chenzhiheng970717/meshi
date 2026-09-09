@@ -1,6 +1,6 @@
 # 把 prototype/ 部署到 GitHub Pages，这样评审时有个可以直接打开的链接。
-#
-# 首次使用前，去仓库 Settings → Pages → Source 选 "GitHub Actions"。
+# configure-pages 带 enablement: true，会自动开启 Pages，不用先去 Settings 点。
+# 部署的是演示模式（无后端）；要看真实数据，原型加 ?api=<Edge Function 地址>。
 name: Deploy prototype to Pages
 
 on:
@@ -30,6 +30,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:

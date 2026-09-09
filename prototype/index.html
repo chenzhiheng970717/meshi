@@ -169,11 +169,14 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .card.picked .cbody{background:linear-gradient(90deg,var(--accent-soft) 0%,transparent 62%)}
 .card.picked .cname{color:var(--accent-ink)}
 .pickmark{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;letter-spacing:.11em;padding:2px 7px;border-radius:2px;background:var(--accent);color:#FFF6EE}
-.photo .demo-tag{position:absolute;right:6px;bottom:6px;font-size:9.5px;letter-spacing:.08em;color:var(--band-ink);background:rgba(43,31,26,.6);padding:1px 5px;border-radius:2px}
+.gsrc{font-size:9px;letter-spacing:.06em;color:var(--ink-3);border:1px solid var(--rule);border-radius:2px;padding:0 3px;margin-left:5px;text-transform:uppercase}
+.photo .demo-tag,.dr-photo .demo-tag{position:absolute;right:6px;bottom:6px;font-size:9.5px;letter-spacing:.08em;color:var(--band-ink);background:rgba(43,31,26,.6);padding:1px 5px;border-radius:2px}
+.dr-photo .demo-tag{right:10px;bottom:8px;font-size:10px}
 .cname .lk{opacity:0;transition:.13s;color:var(--ink-3);margin-left:5px}
 .card:hover .cname .lk{opacity:1}
 .photo{background:var(--sunk);position:relative;display:block;border-right:1px solid var(--rule);min-height:132px}
 .photo svg{position:absolute;inset:0;width:100%;height:100%}
+.photo .shot,.dr-photo .shot{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .photo .rk{position:absolute;left:8px;top:7px;font-family:var(--mono);font-size:10.5px;color:var(--band-ink);background:rgba(43,31,26,.72);padding:2px 6px;border-radius:2px;letter-spacing:.05em}
 .cbody{padding:13px 15px;display:flex;flex-direction:column;gap:9px;min-width:0}
 .crow1{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
@@ -296,7 +299,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 <symbol id="i-smoke" viewBox="0 0 24 24"><rect x="3" y="13" width="14" height="4" rx="1"/><path d="M19 13v4M14 13v4M15.5 9.5c1.5-1 1.5-2.5 0-3.5"/></symbol>
 </defs></svg>
 
-<div class="demo">演示原型 · 店铺、评分与评论数均为示例数据，非真实营业信息</div>
+<div class="demo" id="demostrip">演示原型 · 店铺、评分与评论数均为示例数据，非真实营业信息</div>
 
 <!-- ============ LOGIN ============ -->
 <div class="login" id="login">
@@ -475,6 +478,14 @@ var ART={
  G014:'<rect width="100" height="100" fill="#E7DACB"/><ellipse cx="48" cy="82" rx="30" ry="5" fill="#C2AF9E"/><path d="M22 44h52v16c0 12-10 20-26 20s-26-8-26-20z" fill="#FAF6EC"/><ellipse cx="48" cy="44" rx="26" ry="6" fill="#8A5A32"/><path d="M74 50h8a7 7 0 0 1 0 14h-8" stroke="#FAF6EC" stroke-width="5" fill="none"/><path d="M38 24c3 6-3 8 0 14M56 22c3 6-3 8 0 14" stroke="#CDBBA9" stroke-width="3" fill="none" stroke-linecap="round"/>'
 };
 function art(g){return '<svg class="food" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">'+(ART[g]||ART.G004)+'</svg>';}
+/* 真实照片就用照片，没有就用分类插画（并标「示例图」）。
+   照片来自 HotPepper（imgfp.hotp.jp），仅在 ?api= 模式下加载外部资源。 */
+function isRealPhoto(u){return typeof u==="string" && /^https?:\/\//.test(u);}
+function photoCell(s,which){
+ var u=which==="l"?(s.photoL||s.photo):s.photo;
+ if(isRealPhoto(u)) return '<img class="shot" alt="" loading="lazy" src="'+u+'" onerror="this.hidden=true">';
+ return art(s.g)+'<span class="demo-tag">'+(which==="l"?'示例图 · 正式版为店铺照片':'示例图')+'</span>';
+}
 
 /* ---------- 地址库（门牌号级；正式版由 Google Geocoding / MapKit 解析任意地址） ---------- */
 function A(addr,near,lat,lng){return {addr:addr,near:near,lat:lat,lng:lng};}
@@ -607,7 +618,9 @@ function rowFromResult(x){
      budget:x.budget.mid,cap:x.partyCapacity||x.seats||0,
      room:x.privateRoom&&x.privateRoom.available?1:0,roomDetail:x.privateRoom?x.privateRoom.detail:"",
      nonsmoke:SMOKE_TO_PROTO[x.nonSmoking]||"full",course:0,card:x.card?1:0,
-     rating:null,reviews:null,coupon:!!x.coupon,url:x.url,photo:x.photo?x.photo.l:null,
+     rating:x.rating,reviews:x.userRatingCount,ratingSrc:x.ratingSource,mapsUri:x.googleMapsUri||null,
+     coupon:!!x.coupon,url:x.url,
+     photo:x.photo?x.photo.m:null,photoL:x.photo?x.photo.l:null,
      gName:x.genre.name,hours:x.hours,popularity:x.popularity},
   d:x.distanceM,t:x.etaMinutes,
   p:{dist:x.scoreBreakdown.distance,gen:x.scoreBreakdown.genre,pop:x.scoreBreakdown.popularity,
@@ -687,16 +700,17 @@ function stars(v){
  for(var i=0;i<5;i++) h+='<svg class="i'+(i<full?'':' half')+'"><use href="#i-star"/></svg>';
  return h;
 }
-/* HotPepper 不返回 rating / reviews（ADR-004 未决）。
-   有评分（本地演示数据）就显示星级；没有就显示合成的「人气分」。 */
+/* HotPepper 不返回 rating（ADR-004 → Google Places）。
+   有评分就显示星级（Google 的加小标注）；没匹配到就显示合成的「人气分」。 */
 function ratingMeta(s){
  if(s.rating!=null){
+  var src=s.ratingSrc==="google"?'<span class="gsrc" title="评分来自 Google">Google</span>':'';
   return '<span class="stars">'+stars(s.rating)+
    '<b style="color:var(--ink);font-family:var(--mono);font-size:12.5px;margin-left:3px">'+s.rating.toFixed(1)+'</b>'+
-   '<span class="rv">'+ico("chat")+' '+s.reviews+'</span></span>';
+   '<span class="rv">'+ico("chat")+' '+(s.reviews||0)+'</span>'+src+'</span>';
  }
  var p=Math.round((s.popularity||0)*100);
- return '<span class="stars" title="HotPepper 无评分，暂用合成人气分（ADR-004 未决）">'+
+ return '<span class="stars" title="没匹配到 Google 评分，暂用合成人气分">'+
   ico("spark")+'<b style="color:var(--ink-2);font-family:var(--mono);font-size:12px;margin-left:2px">人气 '+p+'</b></span>';
 }
 function renderNotes(res){
@@ -712,6 +726,16 @@ function renderNotes(res){
  if(sn) sn.textContent = res.source==="hotpepper"
   ? "实时数据 · 基于 Recruit 利用規約"
   : (res.source==="mock" ? "演示数据（Edge Function 未接入 HotPepper）" : "本地演示数据");
+ var ds=$("demostrip");
+ if(ds){
+  if(res.source!=="hotpepper"){
+   ds.textContent="演示原型 · 店铺、评分与评论数均为示例数据，非真实营业信息";
+  }else{
+   var hasG=(res.rows||[]).some(function(r){return r.s&&r.s.ratingSrc==="google";});
+   ds.textContent="店铺 / 照片 / 营业时间来自 HotPepper · 评分来自 Google"+
+    (hasG?"":"（部分店未匹配，显示合成人气分）")+" · 均为实时数据";
+  }
+ }
 }
 /* API 的 card 字段只有「利用可 / 利用不可」两个值，拿不到 IC / 扫码，
    所以支付只保留一个「可刷卡」标记。non_smoking 是三态字符串。 */
@@ -785,8 +809,8 @@ function paint(res){
    (s.coupon?'<span class="pay" style="color:var(--gold);border-color:var(--gold)">'+ico("star")+'有优惠券</span>':'')+
    (s.hours&&s.hours.disclaimer?'<span class="pay" style="color:var(--accent);border-color:var(--accent)">'+ico("clock")+'营业时间以店家为准</span>':'');
   c.innerHTML=
-   '<div class="photo" data-act="open" role="link" tabindex="0">'+art(s.g)+
-     '<span class="rk">'+String(rank).padStart(2,"0")+'</span><span class="demo-tag">示例图</span></div>'+
+   '<div class="photo" data-act="open" role="link" tabindex="0">'+photoCell(s,"m")+
+     '<span class="rk">'+String(rank).padStart(2,"0")+'</span></div>'+
    '<div class="cbody">'+
      '<div class="crow1"><button class="cname" data-act="open" title="在 HotPepper 打开">'+s.name+ico("link","lk")+'</button>'+
        '<span class="gtag">'+g.n+'</span>'+(picked?'<span class="pickmark">'+ico("check")+'今晚就这家</span>':'')+
@@ -846,14 +870,15 @@ function mark(s,kind){
 function openDrawer(r){
  var s=r.s,g=GMAP[s.g]||{n:s.gName||"餐厅"},m=mode();
  var ph=$("dr-photo");
- ph.innerHTML=art(s.g)+'<span class="demo-tag" style="position:absolute;right:10px;bottom:8px;font-size:10px;letter-spacing:.08em;color:var(--band-ink);background:rgba(43,31,26,.6);padding:2px 6px;border-radius:2px">示例图 · 正式版为店铺照片</span><button class="dr-close" id="dr-close2">✕</button>';
+ ph.innerHTML=photoCell(s,"l")+'<button class="dr-close" id="dr-close2">✕</button>';
  $("dr-close2").addEventListener("click",closeDrawer);
  $("dr-name").textContent=s.name;
  $("dr-sub").textContent=g.n+" · "+s.station;
  var oh=function(h){var H=Math.floor(h)%24,M=(h%1)?"30":"00";return (H<10?"0":"")+H+":"+M;};
  var ratingLine = s.rating!=null
-  ? s.rating.toFixed(1)+' / 5.0 · '+s.reviews+' 条评论'
-  : '合成人气分 '+Math.round((s.popularity||0)*100)+'（HotPepper 无评分，ADR-004 未决）';
+  ? s.rating.toFixed(1)+' / 5.0 · '+(s.reviews||0)+' 条评论'
+    +(s.ratingSrc==="google"?' · <span style="color:var(--ink-3)">Google'+(s.mapsUri?' <a href="'+s.mapsUri+'" target="_blank" rel="noopener" style="color:var(--accent)">↗</a>':'')+'</span>':'')
+  : '合成人气分 '+Math.round((s.popularity||0)*100)+'（没匹配到 Google 评分）';
  var hoursLine = s.hours
   ? ((s.hours.todayLabel||'营业时间见店家页')
      +(s.hours.lastOrderLabel?'（L.O. '+s.hours.lastOrderLabel+'）':'')
@@ -899,6 +924,18 @@ function useAddr(a){
  $("addr").value=a.addr; $("ac-list").classList.remove("on");
  State.batch=0; syncStar(); render();
 }
+/* 自由文本地址 → 经纬度（Google Geocoding，服务端代理）。仅 ?api= 模式。 */
+function geocodeAddr(raw,btn){
+ if(btn) btn.textContent="解析中…";
+ fetch(API_BASE+"/geocode?q="+encodeURIComponent(raw))
+  .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+  .then(function(x){
+   if(!x.ok){ toast(x.j.error||"解析不出这个地址，换个写法试试"); return; }
+   useAddr({addr:x.j.formatted||raw,near:"Google 定位",lat:x.j.lat,lng:x.j.lng});
+   toast("已定位到 "+(x.j.formatted||raw));
+  })
+  .catch(function(){ toast("地理编码请求失败"); });
+}
 function syncStar(){
  var v=$("addr").value.trim();
  $("save-addr").classList.toggle("on", State.saved.some(function(x){return x.addr===v;}));
@@ -940,7 +977,17 @@ function build(){
   }).slice(0,6);
   al.innerHTML="";
   if(!hits.length){
-   al.appendChild(el("div",null,'<div style="padding:10px 12px;font-size:12.5px;color:var(--ink-3);line-height:1.55">演示地址库里没有匹配项。<br>正式版会用 Google Geocoding 解析任意门牌号。</div>'));
+   var raw=this.value.trim();
+   if(API_BASE && raw.length>=4){
+    var gb=el("button",null,
+     '<svg class="i" style="color:var(--accent)"><use href="#i-search"/></svg>'+
+     '<span style="display:flex;flex-direction:column;line-height:1.35"><span>解析「'+raw+'」</span>'+
+     '<span style="font-size:11px;color:var(--ink-3)">用 Google 地理编码定位</span></span>');
+    gb.addEventListener("click",function(){geocodeAddr(raw,gb);});
+    al.appendChild(gb);
+   } else {
+    al.appendChild(el("div",null,'<div style="padding:10px 12px;font-size:12.5px;color:var(--ink-3);line-height:1.55">演示地址库里没有匹配项。<br>接上 Google Geocoding 后可解析任意门牌号（?api= 模式）。</div>'));
+   }
    al.classList.add("on"); return;
   }
   hits.forEach(function(a){
