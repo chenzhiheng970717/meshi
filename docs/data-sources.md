@@ -1,3 +1,5 @@
+> ⚠️ **已过时（ADR-008，2026-09-11）** —— 数据源改用 Google Places (New)，本文档的 HotPepper vs Yelp/Google 对比只作历史记录。
+
 # 数据源
 
 ## 对比

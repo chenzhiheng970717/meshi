@@ -1,26 +1,18 @@
-// Supabase Edge Function：/search（POST）、/geocode（GET）、/masters（GET）
+// Supabase Edge Function：/search（POST）、/geocode（GET）
 //
-// 持 HotPepper / Google Key（Supabase secret，绝不进前端）+ 缓存 + 打分。见 ADR-005。
-// 业务逻辑全在 ../_shared/*，本文件只做 HTTP 壳。
-// 本地调试无需 Deno：`npm run dev` 用 scripts/dev-server.mjs 跑同一条管道。
+// 数据源 = Google Places (New)（ADR-008）。key 在 Supabase secret，绝不进前端。
+// 本地调试无需 Deno：`npm run dev`。
 //
-// 部署见 docs/deploy.md。
-// secret：HOTPEPPER_API_KEY / GOOGLE_PLACES_API_KEY / APP_TOKEN
-//   - 未设 HOTPEPPER_API_KEY → 走演示数据
-//   - 未设 GOOGLE_PLACES_API_KEY → 评分 / 地理编码降级
-//   - 设了 APP_TOKEN → 所有请求必须带 X-App-Token 头且匹配（挡住捡到 URL 的人）
+// secret：GOOGLE_PLACES_API_KEY / APP_TOKEN
+//   - 未设 GOOGLE_PLACES_API_KEY → 走演示数据
+//   - 设了 APP_TOKEN → 请求必须带 X-App-Token 头且匹配
 
-import {
-  HttpError,
-  normalizeRequest,
-  runSearch,
-} from "../_shared/pipeline.ts";
-import { getMasters } from "../_shared/master.ts";
+import { HttpError, normalizeRequest, runSearch } from "../_shared/pipeline.ts";
 import { createGoogle } from "../_shared/google.ts";
-import type { RawShop } from "../_shared/hotpepper.ts";
-import mockData from "../_shared/mock/gourmet-shops.json" with { type: "json" };
+import type { Candidate } from "../_shared/places.ts";
+import mockData from "../_shared/mock/google-places.json" with { type: "json" };
 
-const MOCK_SHOPS = (mockData as { shop: RawShop[] }).shop;
+const MOCK: Candidate[] = (mockData as { candidates: Candidate[] }).candidates;
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -34,52 +26,35 @@ const Deno: any = (globalThis as any).Deno;
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
-  // 应用层鉴权：设了 APP_TOKEN 就强制校验，挡住拿到 URL 但没 token 的人
   const appToken = Deno.env.get("APP_TOKEN") ?? "";
   if (appToken && req.headers.get("x-app-token") !== appToken) {
     return json({ error: "未授权" }, 401);
   }
 
-  const key = Deno.env.get("HOTPEPPER_API_KEY") ?? undefined;
   const gkey = Deno.env.get("GOOGLE_PLACES_API_KEY") ?? undefined;
   const path = new URL(req.url).pathname;
 
-  if (req.method === "GET" && path.endsWith("/masters")) {
-    const m = await getMasters(key);
-    return json({ genres: m.genres, budgets: m.budgets, source: m.source }, 200, {
-      "Cache-Control": "public, max-age=3600",
-    });
-  }
-
-  // GET /geocode?q=<地址>  或  ?lat=&lng=（反向）  → { lat, lng, formatted } | 404
+  // GET /geocode?q=<地址>  或  ?lat=&lng=（反向）
   if (req.method === "GET" && path.endsWith("/geocode")) {
     const sp = new URL(req.url).searchParams;
     const g = createGoogle({ key: gkey });
     if (!g.enabled) return json({ error: "地理编码未配置" }, 501);
-    const lat = Number(sp.get("lat"));
-    const lng = Number(sp.get("lng"));
     const hit = sp.has("lat") && sp.has("lng")
-      ? await g.reverseGeocode(lat, lng)
+      ? await g.reverseGeocode(Number(sp.get("lat")), Number(sp.get("lng")))
       : await g.geocode(sp.get("q") ?? "");
     if (!hit) return json({ error: "解析不出这个位置" }, 404);
     return json(hit, 200, { "Cache-Control": "public, max-age=86400" });
   }
 
-  if (req.method !== "POST") {
-    return json({ error: "只接受 POST" }, 405);
-  }
+  if (req.method !== "POST") return json({ error: "只接受 POST" }, 405);
 
   try {
-    const body = await req.json();
-    const search = normalizeRequest(body);
+    const search = normalizeRequest(await req.json());
     const res = await runSearch(search, {
-      env: { HOTPEPPER_API_KEY: key, GOOGLE_PLACES_API_KEY: gkey },
-      mockShops: MOCK_SHOPS,
+      env: { GOOGLE_PLACES_API_KEY: gkey },
+      mockCandidates: MOCK,
     });
-    return json(res, 200, {
-      // 缓存 ≤ 24h（Recruit 条款）。这里给 CDN / 浏览器一个短缓存。
-      "Cache-Control": "public, max-age=600",
-    });
+    return json(res, 200, { "Cache-Control": "public, max-age=600" });
   } catch (err) {
     if (err instanceof HttpError) return json({ error: err.message }, err.status);
     console.error(err);

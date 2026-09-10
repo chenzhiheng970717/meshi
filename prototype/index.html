@@ -426,8 +426,8 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 
   <footer class="band">
     <div class="band-cols">
-      <div><h5>数据来源</h5><p id="src-name">Powered by ホットペッパーグルメ</p><p class="dim" id="src-note">当前为演示数据；正式版显示官方 logo</p></div>
-      <div><h5>覆盖范围</h5><p>東京 23 区</p><p class="dim">演示数据 24 家</p></div>
+      <div><h5>数据来源</h5><p id="src-name">Powered by Google</p><p class="dim" id="src-note">本地演示数据</p></div>
+      <div><h5>覆盖范围</h5><p>东京 · Google Maps</p><p class="dim">演示数据 14 家</p></div>
       <div><h5>排序方式</h5><p>服务端规则打分 · 可解释</p><p class="dim">距离 35 / 口味 25 / 人气 25 / 预算 5 / 场景 10</p></div>
       <div><h5>版本</h5><p>Prototype v0.3 · /search 契约</p><p class="dim">界面评审用</p></div>
     </div>
@@ -441,9 +441,9 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
   <div class="dr-body">
     <div><h3 id="dr-name"></h3><div class="dr-sub" id="dr-sub"></div></div>
     <dl class="kv" id="dr-kv"></dl>
-    <a class="btn" id="dr-link" href="#" target="_blank" rel="noopener"><svg class="i"><use href="#i-link"/></svg>在 HotPepper 打开</a>
+    <a class="btn" id="dr-link" href="#" target="_blank" rel="noopener"><svg class="i"><use href="#i-link"/></svg>在 Google 地图打开</a>
     <div class="sec"><h4>为什么排这个位置</h4><div id="dr-scores"></div></div>
-    <p class="credit">店铺信息由 <b>ホットペッパー グルメ</b> 提供。评分与评论数在正式版需由 Google Places 补充或自行积累——HotPepper API 不返回评分字段。当前均为演示数据。</p>
+    <p class="credit">店铺、评分、营业时间由 <b>Google Maps</b> 提供。演示模式下为示例数据。</p>
   </div>
 </aside>
 
@@ -479,7 +479,7 @@ var ART={
 };
 function art(g){return '<svg class="food" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">'+(ART[g]||ART.G004)+'</svg>';}
 /* 真实照片就用照片，没有就用分类插画（并标「示例图」）。
-   照片来自 HotPepper（imgfp.hotp.jp），仅在 ?api= 模式下加载外部资源。 */
+   照片来自 Google（lh3.googleusercontent.com），仅在 ?api= 模式下加载外部资源。 */
 function isRealPhoto(u){return typeof u==="string" && /^https?:\/\//.test(u);}
 function photoCell(s,which){
  var u=which==="l"?(s.photoL||s.photo):s.photo;
@@ -528,7 +528,7 @@ function S(id,name,g,lat,lng,st,bud,cap,room,ns,course,card,rt,rv,o1,o2,coupon){
   return {id:id,name:name,g:g,lat:lat,lng:lng,station:st,budget:bud,cap:cap,room:room,nonsmoke:ns,
    course:course,card:card,rating:rt,reviews:rv,open:[o1,o2],coupon:!!coupon,url:null,photo:null};
 }
-function shopUrl(s){ return s.url || "https://www.hotpepper.jp/CSP/sr/?keyword="+encodeURIComponent(s.name); }
+function shopUrl(s){ return s.url || "https://www.google.com/maps/search/"+encodeURIComponent(s.name); }
 var SHOPS=[
  S("a1","炭火焼鳥 とりまる","G001",35.6919,139.7031,"新宿駅 東口 徒歩3分",3500,8,1,"full",1,1,4.3,842,17,23.5,1),
  S("a2","蕎麦切り 花見月","G004",35.6884,139.6968,"新宿駅 南口 徒歩5分",2800,4,0,"full",0,0,4.1,316,11,21,1),
@@ -601,7 +601,8 @@ function yen(n){return "¥"+n.toLocaleString("en-US");}
 /* 人均：有区间就显示区间（远程数据），否则单值（演示数据） */
 function priceText(s){
  if(s.budgetLo && s.budgetHi && s.budgetLo!==s.budgetHi) return yen(s.budgetLo)+"–"+s.budgetHi.toLocaleString("en-US");
- return yen(s.budgetHi||s.budget||0);
+ if(s.budgetHi||s.budget) return yen(s.budgetHi||s.budget);
+ return "价格未知";
 }
 function cl(x){return Math.max(0,Math.min(1,x));}
 function popOf(s){return cl(.7*((s.rating-3.2)/1.4)+.3*Math.min(1,Math.log10(s.reviews)/3.2));}
@@ -651,24 +652,37 @@ function markIds(kind){return Object.keys(State.marks).filter(function(k){
  return kind==="eaten" ? m.eaten : m.op===kind;
 });}
 
-var SMOKE_TO_PROTO={full:"full","partial":"part",none:"none",unknown:"full"};
+/* Google primaryType → 分类插画的 key（Google 大多有真实照片，插画只是兜底） */
+function typeArt(t){
+ t=t||"";
+ if(/ramen|noodle/.test(t)) return "G013";
+ if(/sushi|japanese|tempura|udon|soba|donburi/.test(t)) return "G004";
+ if(/yakiniku|barbecue|steak/.test(t)) return "G008";
+ if(/chinese|dim_sum|hot_pot/.test(t)) return "G007";
+ if(/italian|french|pizza|mediterranean/.test(t)) return "G006";
+ if(/american|hamburger|diner|steak_house/.test(t)) return "G005";
+ if(/korean/.test(t)) return "G017";
+ if(/thai|vietnamese|indian|indonesian|asian/.test(t)) return "G009";
+ if(/cafe|coffee|dessert|bakery|tea|ice_cream|confectionery/.test(t)) return "G014";
+ return "G001"; // 居酒屋 / bar / restaurant 兜底
+}
 function rowFromResult(x){
  return {
-  s:{id:x.id,name:x.name,g:x.genre.code,lat:x.lat,lng:x.lng,station:x.station,
-     budget:x.budget.mid,budgetLo:x.budget.lo,budgetHi:x.budget.hi,cap:x.partyCapacity||x.seats||0,
-     room:x.privateRoom&&x.privateRoom.available?1:0,roomDetail:x.privateRoom?x.privateRoom.detail:"",
-     nonsmoke:SMOKE_TO_PROTO[x.nonSmoking]||"full",course:0,card:x.card?1:0,
-     rating:x.rating,reviews:x.userRatingCount,ratingSrc:x.ratingSource,mapsUri:x.googleMapsUri||null,
-     coupon:!!x.coupon,url:x.url,
-     photo:x.photo?x.photo.m:null,photoL:x.photo?x.photo.l:null,
-     gName:x.genre.name,hours:x.hours,popularity:x.popularity},
+  s:{id:x.id,name:x.name,g:typeArt(x.genre.type),gType:x.genre.type,gLabel:x.genre.label,
+     lat:x.lat,lng:x.lng,station:x.address||"",address:x.address||"",
+     budget:x.budget?Math.round((x.budget.lo+x.budget.hi)/2):0,
+     budgetLo:x.budget?x.budget.lo:0,budgetHi:x.budget?x.budget.hi:0,
+     rating:x.rating,reviews:x.userRatingCount,ratingSrc:x.rating!=null?"google":null,
+     reservable:x.reservable,url:x.url,mapsUri:x.url,
+     photo:x.photo?x.photo.url:null,photoL:x.photo?x.photo.url:null,photoName:x.photoName,
+     hours:x.hours,popularity:x.popularity},
   d:x.distanceM,t:x.etaMinutes,
   p:{dist:x.scoreBreakdown.distance,gen:x.scoreBreakdown.genre,pop:x.scoreBreakdown.popularity,
      bud:x.scoreBreakdown.budget,fit:x.scoreBreakdown.scene},
   score:x.score,whyText:(x.why||[]).join(" · ")
  };
 }
-function mapRej(x){return {dist:x.distance,time:x.hours,cap:x.capacity,bud:x.budget,gen:x.genre,dis:x.disliked};}
+function mapRej(x){return {dist:x.distance,time:x.hours,bud:x.budget,gen:x.genre,dis:x.disliked};}
 
 /* 统一形状：{rows, rej, total, batches, batch, notes, source, sliceLocally} */
 function search(){
@@ -757,26 +771,20 @@ function ratingMeta(s){
 function renderNotes(res){
  var box=$("notes"); if(!box) return;
  var msgs=(res.notes||[]).slice();
- if(res.source && res.source!=="local" && res.source!=="mock") msgs.unshift("数据来源：HotPepper（实时）");
+ var live = res.source==="google";
+ if(live) msgs.unshift("数据来源：Google Maps（实时）");
  box.innerHTML = msgs.length ? msgs.map(function(t){
   var cls=/营业时间|连不上|请以店家/.test(t)?' class="hnote"':'';
   return '<span'+cls+'>'+t+'</span>';
  }).join("") : "";
  box.style.display = msgs.length ? "" : "none";
  var sn=$("src-note");
- if(sn) sn.textContent = res.source==="hotpepper"
-  ? "实时数据 · 基于 Recruit 利用規約"
-  : (res.source==="mock" ? "演示数据（Edge Function 未接入 HotPepper）" : "本地演示数据");
+ if(sn) sn.textContent = live ? "实时数据 · Google Maps Platform"
+  : (res.source==="mock" ? "演示数据（Edge Function 未接入 Google）" : "本地演示数据");
  var ds=$("demostrip");
- if(ds){
-  if(res.source!=="hotpepper"){
-   ds.textContent="演示原型 · 店铺、评分与评论数均为示例数据，非真实营业信息";
-  }else{
-   var hasG=(res.rows||[]).some(function(r){return r.s&&r.s.ratingSrc==="google";});
-   ds.textContent="店铺 / 照片 / 营业时间来自 HotPepper · 评分来自 Google"+
-    (hasG?"":"（部分店未匹配，显示合成人气分）")+" · 均为实时数据";
-  }
- }
+ if(ds) ds.textContent = live
+  ? "店铺 / 评分 / 照片 / 营业时间均来自 Google Maps，实时数据"
+  : "演示原型 · 店铺、评分、营业信息均为示例数据";
 }
 /* API 的 card 字段只有「利用可 / 利用不可」两个值，拿不到 IC / 扫码，
    所以支付只保留一个「可刷卡」标记。non_smoking 是三态字符串。 */
@@ -842,24 +850,26 @@ function paint(res){
  }
 
  page.forEach(function(r,i){
-  var s=r.s,g=GMAP[s.g]||{n:s.gName||"餐厅"},mk=getMark(s.id),picked=State.picked===s.id;
+  var s=r.s,gLabel=s.gLabel||(GMAP[s.g]&&GMAP[s.g].n)||"餐厅",mk=getMark(s.id),picked=State.picked===s.id;
   var rank=State.batch*5+i+1;
   var c=el("div","card"+(rank===1?" best":"")+(picked?" picked":""));
-  var pays=(s.card?'<span class="pay">'+ico("card")+'可刷卡</span>':'')+
-   '<span class="pay">'+ico("smoke")+SMOKE[s.nonsmoke]+'</span>'+
+  var pays=
+   (s.card?'<span class="pay">'+ico("card")+'可刷卡</span>':'')+
+   (s.nonsmoke?'<span class="pay">'+ico("smoke")+SMOKE[s.nonsmoke]+'</span>':'')+
    (s.coupon?'<span class="pay" style="color:var(--gold);border-color:var(--gold)">'+ico("star")+'有优惠券</span>':'')+
+   (s.reservable?'<span class="pay">'+ico("check")+'可预约</span>':'')+
    (s.hours&&s.hours.disclaimer?'<span class="pay" style="color:var(--accent);border-color:var(--accent)">'+ico("clock")+'营业时间以店家为准</span>':'');
   c.innerHTML=
    '<div class="photo" data-act="open" role="link" tabindex="0">'+photoCell(s,"m")+
      '<span class="rk">'+String(rank).padStart(2,"0")+'</span></div>'+
    '<div class="cbody">'+
-     '<div class="crow1"><button class="cname" data-act="open" title="在 HotPepper 打开">'+s.name+ico("link","lk")+'</button>'+
-       '<span class="gtag">'+g.n+'</span>'+(picked?'<span class="pickmark">'+ico("check")+'今晚就这家</span>':'')+
+     '<div class="crow1"><button class="cname" data-act="open" title="在 Google 地图打开">'+s.name+ico("link","lk")+'</button>'+
+       '<span class="gtag">'+gLabel+'</span>'+(picked?'<span class="pickmark">'+ico("check")+'今晚就这家</span>':'')+
        '<span class="cscore">'+r.score.toFixed(2)+'</span></div>'+
      '<div class="cmeta">'+
-       '<span>'+ico("pin")+s.station+'</span>'+
+       (s.address?'<span>'+ico("pin")+s.address+'</span>':'')+
        ratingMeta(s)+
-       '<span class="price">'+priceText(s)+' <span style="color:var(--ink-3);font-family:var(--sans);font-size:11.5px">/ 人</span></span>'+
+       '<span class="price">'+priceText(s)+(priceText(s)==="价格未知"?"":' <span style="color:var(--ink-3);font-family:var(--sans);font-size:11.5px">/ 人</span>')+'</span>'+
      '</div>'+
      '<div class="why">'+ico("spark")+'<span>'+(r.whyText||why(r))+'</span></div>'+
      '<div class="pays">'+(s.room?'<span class="pay">'+ico("room")+'包间</span>':'')+pays+'</div>'+
@@ -903,29 +913,27 @@ function mark(s,kind){
 
 /* ---------- 抽屉 ---------- */
 function openDrawer(r){
- var s=r.s,g=GMAP[s.g]||{n:s.gName||"餐厅"},m=mode();
+ var s=r.s,gLabel=s.gLabel||(GMAP[s.g]&&GMAP[s.g].n)||"餐厅",m=mode();
  var ph=$("dr-photo");
  ph.innerHTML=photoCell(s,"l")+'<button class="dr-close" id="dr-close2">✕</button>';
  $("dr-close2").addEventListener("click",closeDrawer);
  $("dr-name").textContent=s.name;
- $("dr-sub").textContent=g.n+" · "+s.station;
+ $("dr-sub").textContent=gLabel+(s.address?" · "+s.address:"");
  var oh=function(h){var H=Math.floor(h)%24,M=(h%1)?"30":"00";return (H<10?"0":"")+H+":"+M;};
  var ratingLine = s.rating!=null
-  ? s.rating.toFixed(1)+' / 5.0 · '+(s.reviews||0)+' 条评论'
-    +(s.ratingSrc==="google"?' · <span style="color:var(--ink-3)">Google'+(s.mapsUri?' <a href="'+s.mapsUri+'" target="_blank" rel="noopener" style="color:var(--accent)">↗</a>':'')+'</span>':'')
-  : '合成人气分 '+Math.round((s.popularity||0)*100)+'（没匹配到 Google 评分）';
+  ? s.rating.toFixed(1)+' / 5.0 · '+(s.reviews||0)+' 条评价 · <span style="color:var(--ink-3)">Google</span>'
+  : '合成人气分 '+Math.round((s.popularity||0)*100)+'（Google 无评分）';
  var hoursLine = s.hours
   ? ((s.hours.todayLabel||'营业时间见店家页')
-     +(s.hours.lastOrderLabel?'（L.O. '+s.hours.lastOrderLabel+'）':'')
+     +(s.hours.lastArrivalLabel?'（建议 '+s.hours.lastArrivalLabel+' 前到）':'')
      +(s.hours.disclaimer?' · 请以店家为准':''))
-  : oh(s.open[0])+' – '+oh(s.open[1])+'（L.O. 提前 1 小时）';
+  : (s.open?oh(s.open[0])+' – '+oh(s.open[1]):'见店家页');
  $("dr-kv").innerHTML=
   '<dt>评分</dt><dd>'+ratingLine+'</dd>'+
   '<dt>营业</dt><dd>'+hoursLine+'</dd>'+
-  '<dt>人均</dt><dd>'+priceText(s)+' / 人</dd>'+
+  '<dt>人均</dt><dd>'+priceText(s)+(priceText(s)==="价格未知"?"":" / 人")+'</dd>'+
   '<dt>到达</dt><dd>'+(Math.round(r.t)<1?m.n+'就到，几乎在门口':m.n+' 约 '+Math.round(r.t)+' 分钟')+' · 直线 '+(r.d<1000?r.d+' m':(r.d/1000).toFixed(1)+' km')+'</dd>'+
-  '<dt>容纳</dt><dd>'+(s.cap?'最多 '+s.cap+' 人':'人数未标注')+(s.room?' · 有包间'+(s.roomDetail?'：'+s.roomDetail:''):'')+'</dd>'+
-  '<dt>支付</dt><dd>'+(s.card?'可刷卡':'仅现金')+' · '+SMOKE[s.nonsmoke]+(s.coupon?' · 有优惠券':'')+'</dd>';
+  (s.reservable!=null?'<dt>预约</dt><dd>'+(s.reservable?'支持在线预约':'未标注可预约')+'</dd>':'');
  $("dr-link").href=shopUrl(s);
  $("dr-scores").innerHTML=W.map(function(x){
   return '<div class="srow"><span>'+x.n+'<span style="color:var(--ink-3);font-size:10.5px"> ×'+x.w.toFixed(2)+'</span></span>'+

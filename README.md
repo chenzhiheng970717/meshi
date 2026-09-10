@@ -5,7 +5,7 @@
 **东京餐厅推荐 — 按时间、位置、预算和口味，挑出真正合适的五家**
 
 [![Prototype](https://img.shields.io/badge/prototype-v0.3-C0431D)](prototype/index.html)
-[![Stage](https://img.shields.io/badge/stage-UI%20review-9C6D18)](docs/roadmap.md)
+[![Stage](https://img.shields.io/badge/stage-M1%20data%20pipeline-9C6D18)](docs/roadmap.md)
 [![License](https://img.shields.io/badge/license-MIT-456638)](LICENSE)
 
 </div>
@@ -24,17 +24,17 @@
 
 ## 当前状态
 
-**UI 评审阶段。** 交互原型已完成并可操作，后端尚未接入。
+**M1 数据管道。** `/search` Edge Function 已上线（Supabase），前端演示版在 GitHub Pages，数据源 Google Places。
 
 | 模块 | 状态 |
 |---|---|
-| 界面原型（含打分引擎、标记、分批） | ✅ v0.3 |
+| 界面原型（打分 / 标记 / 分批 / 定位）| ✅ |
+| `/search` 契约 + 管道（打分 / 去重 / 分批）| ✅ [docs/contract.md](docs/contract.md) |
+| Google Places 数据源（评分 / 照片 / 营业时间 / priceRange）| ✅ ADR-008 |
+| Edge Function 部署到 Supabase | ✅ |
+| 演示版公开链接（GitHub Pages）| ✅ |
 | 邮箱 OTP 登录 | 🔨 仅界面 |
-| `/search` 契约 + 管道骨架（解析器 / 打分 / 采样 / 分批） | ✅ 演示数据，见 [docs/contract.md](docs/contract.md) |
-| 营业时间解析器 + 单元测试 | ✅ `supabase/functions/_shared/openHours.ts` |
-| HotPepper API 接入 | ⬜ 等 API Key |
-| Supabase Edge Function 部署 | 🔨 HTTP 壳已写，未部署 |
-| 部署 | ⬜ 未开始 |
+| Vite + React 重构、自定义域名 | ⬜ |
 
 ## 快速开始
 
@@ -50,16 +50,11 @@ python3 -m http.server 8000 --directory prototype
 
 然后打开 http://localhost:8000 。登录页输入任意 6 位数字，或点「先随便逛逛」。
 
-> 原型内的店铺、评分、评论数**全部是演示数据**，不是真实营业信息。
-
-想连本地后端跑 `/search` 契约（仍是演示数据，但走真实管道：解析 / 过滤 / 打分 / 分批）：
+> 双击打开时店铺 / 评分为演示数据。连真实数据要 `?api=` 指向 Edge Function（见 [docs/deploy.md](docs/deploy.md)）。
 
 ```bash
-npm run dev    # http://localhost:8787，无需 Deno / Supabase CLI
-npm test       # 解析器 + 打分 + 管道单测
-
-open "http://localhost:8787/?api=http://localhost:8787"   # 原型连后端
-open "http://localhost:8787/?api=off"                     # 切回自包含演示
+npm run dev    # http://localhost:8787（读 .env，有 Google key 就打真实 API）
+npm test
 ```
 
 ## 技术选型
@@ -67,35 +62,20 @@ open "http://localhost:8787/?api=off"                     # 切回自包含演�
 | 层 | 选择 | 理由 |
 |---|---|---|
 | 前端 | Vite + React（原型阶段为原生 HTML） | 零审核、随时发布、成本 $1/月 |
-| 店铺数据 | [HotPepper グルメサーチAPI](https://webservice.recruit.co.jp/doc/hotpepper/reference.html) | 免费，且原生支持预算 / 人数 / 包间筛选 |
+| 店铺数据 | Google Places API (New) `searchNearby` | 覆盖全、`priceRange` 真实人均、结构化营业时间、评分 |
 | 后端 | Supabase Edge Function | 唯一持有 API Key 的地方，兼做缓存与打分 |
 | 数据库 | Supabase Postgres | 只存用户、标记、常用地址；不存店铺数据 |
 | 认证 | Supabase Auth（邮箱 OTP） | 免费；短信登录成本过高，延后 |
-| 地图 | MapLibre + 免费瓦片 | 避免 Google Maps 计费 |
+| 地理编码 | Google Geocoding（同一 key）| 日本门牌号精度最好 |
+| 地图 | MapLibre + 免费瓦片 | 之后再加 |
 | 部署 | Cloudflare Pages | 免费档足够 |
 
 详细取舍见 [docs/decisions.md](docs/decisions.md)。
 
 ## 推荐算法
 
-**硬过滤**（不满足直接淘汰）：营业时间、可达半径、预算区间重叠、容纳人数、口味分类。
-
-**加权打分**：
-
-```
-score = 0.30·距离 + 0.25·口味 + 0.20·人气 + 0.15·预算 + 0.10·场景
-```
-
-交通方式转换成可达半径：
-
-| 方式 | 公式 |
-|---|---|
-| 步行 | `R = T × 80 m/min` |
-| 自行车 | `R = T × 250 m/min` |
-| 电车 | `R = max(0, T − 12) × 400 m/min` |
-| 驾车 | `R = max(0, T − 10) × 300 m/min` |
-
-电车扣掉的 12 分钟是步行接驳和候车，驾车扣掉的 10 分钟是市区找车位。这两个常数应该做成服务端可调参数。
+硬过滤：可达半径、预算区间重叠、口味、营业时间。加权打分见 [docs/contract.md](docs/contract.md)：
+`0.35·距离 + 0.25·口味 + 0.25·人气 + 0.05·预算 + 0.10·场景`，权重服务端可调。
 
 ## 仓库结构
 
@@ -105,20 +85,16 @@ meshi/
 ├── docs/
 │   ├── roadmap.md            # 路线图与里程碑
 │   ├── decisions.md          # 架构决策记录（ADR）
-│   ├── data-sources.md       # 数据源对比与合规要求
+│   ├── contract.md          # /search 契约
+│   ├── deploy.md            # 部署步骤
 │   └── workflow.md           # Git 工作流约定
 └── .github/workflows/        # CI：部署原型到 GitHub Pages
 ```
 
 ## 合规
 
-店铺数据来自 Recruit 的 HotPepper API，使用时必须遵守其[利用规约](https://cdn.p.recruit.co.jp/terms/rws-t-1001/index.html)：
-
-- 必须显示数据来源署名与 logo
-- 缓存不得超过 24 小时，不得永久复制入库
-- 商用变现需事先取得书面同意
-
-详见 [docs/data-sources.md](docs/data-sources.md)。
+店铺数据来自 Google Places API (New)：页脚显示「Powered by Google」；Place ID 可长期存，
+其它内容缓存 ≤30 天，不长期落库；API key 只在 Edge Function。数据源变迁见 [ADR-008](docs/decisions.md)。
 
 ## 开发约定
 

@@ -3,7 +3,7 @@
 东京餐厅推荐应用。用户输入出发地、就餐时间、交通方式、可接受路程时长、人数、口味、人均预算，返回排好序的五家店并说明推荐理由。
 
 **当前阶段：M1 数据管道。** `/search` Edge Function 已部署到 Supabase，前端演示版在 GitHub Pages。
-数据源正从 HotPepper 切到 Google Places（见 ADR-008）。
+数据源是 Google Places (New)（见 ADR-008，已切完，HotPepper 弃用）。
 
 开工前先读 `docs/roadmap.md`（当前待办与待决策）和 `docs/decisions.md`（已定的架构决策，不要重新讨论）。
 
@@ -31,7 +31,7 @@
 |---|---|
 | 平台 | 网页优先，iOS 壳等算法稳定后再加。微信小程序已排除 |
 | 前端 | Vite + React（原型阶段是原生 HTML 单文件） |
-| 店铺数据 | Google Places API (New) — Text/Nearby Search（ADR-008，取代 HotPepper）。带 `priceRange` 真实人均、结构化营业时间、评分 |
+| 店铺数据 | Google Places API (New) — `searchNearby`（ADR-008）。带 `priceRange` 真实人均、结构化营业时间、评分、照片 |
 | 地理编码 | Google Geocoding（同一个 key，ADR-007） |
 | 后端 | Supabase Edge Function（持 Key + 缓存 + 打分 + `X-App-Token` 鉴权） |
 | 数据库 | Supabase Postgres |
@@ -57,7 +57,7 @@ score = 0.35·距离 + 0.25·口味 + 0.25·人气 + 0.05·预算 + 0.10·场景
 
 预算权重低：用户给的是区间「这个范围都行」，不是「要正中间」。预算项＝区间覆盖率
 （店铺人均区间 ∩ 用户区间，占用户区间宽度的比例），只当微弱加分项。真正把
-「完全超出预算」挡掉的是硬过滤。卡片显示价格区间（`priceRange` / HotPepper `budget.name`），
+「完全超出预算」挡掉的是硬过滤。卡片显示价格区间（Google `priceRange`），
 不显示中位数。
 
 **交通方式 → 可达半径**（`fixed` 是固定开销，应做成服务端可调参数）：
@@ -69,7 +69,7 @@ score = 0.35·距离 + 0.25·口味 + 0.25·人气 + 0.05·预算 + 0.10·场景
 | 电车 | `max(0, T − 12) × 400 m/min` |
 | 驾车 | `max(0, T − 10) × 300 m/min` |
 
-**候选池**：Google Nearby / Text Search 每页最多 20 条，翻页最多 3 页 = 60 条。半径无 3km 限制（上限 50km），不需要多中心点采样。目标半径 > ~5km 时用 Text Search + `locationBias`，否则 Nearby + `locationRestriction`。
+**候选池**：`searchNearby` 每次返回 ≤20，无翻页。半径 ≤2km 一次（DISTANCE 排序）；更大时再补一次 POPULARITY 排序，按 place id 合并。半径上限 50km，不需要多中心点采样。
 
 **营业时间** 用 `regularOpeningHours`（结构化，`periods[]` + `weekdayDescriptions[]`），不用解析自由文本。`currentOpeningHours` 已含节假日调整。跨夜 period 的 `close.day` 会是次日。
 
@@ -126,7 +126,6 @@ score = 0.35·距离 + 0.25·口味 + 0.25·人气 + 0.05·预算 + 0.10·场景
 # 本地起后端 + 静态托管原型（无需 Deno / Supabase CLI）
 npm run dev          # http://localhost:8787，读 .env
 npm test             # 单元测试
-npm run check:api    # 有 key 时审计真实 API 字段
 
 # 部署 Edge Function（.env 里要有 SUPABASE_ACCESS_TOKEN）
 npx supabase functions deploy search

@@ -1,0 +1,1939 @@
+{
+  "_comment": "演示数据（合成）：Candidate 形状对齐 Google Places (New)。仅用于没配 GOOGLE_PLACES_API_KEY 时的 demo 模式。",
+  "candidates": [
+    {
+      "id": "demo_1",
+      "name": "炭火焼鳥 とり松",
+      "address": "新宿区新宿3-12",
+      "lat": 35.6919,
+      "lng": 139.7031,
+      "primaryType": "japanese_izakaya_restaurant",
+      "primaryTypeLabel": "居酒屋",
+      "types": [
+        "japanese_izakaya_restaurant",
+        "restaurant",
+        "food",
+        "point_of_interest"
+      ],
+      "priceRange": {
+        "lo": 3000,
+        "hi": 4000
+      },
+      "priceLevel": "PRICE_LEVEL_MODERATE",
+      "rating": 4.4,
+      "userRatingCount": 842,
+      "hours": {
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 3,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 3,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 3,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 3,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 3,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 6,
+              "hour": 3,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 0,
+              "hour": 3,
+              "minute": 0
+            }
+          }
+        ],
+        "weekdayDescriptions": []
+      },
+      "currentHours": null,
+      "mapsUri": "https://maps.google.com/?cid=demo1",
+      "reservable": true,
+      "photoName": null
+    },
+    {
+      "id": "demo_2",
+      "name": "蕎麦切り 花見月",
+      "address": "新宿区新宿3-8",
+      "lat": 35.6884,
+      "lng": 139.6968,
+      "primaryType": "japanese_restaurant",
+      "primaryTypeLabel": "和食",
+      "types": [
+        "japanese_restaurant",
+        "restaurant",
+        "food",
+        "point_of_interest"
+      ],
+      "priceRange": {
+        "lo": 2000,
+        "hi": 3000
+      },
+      "priceLevel": "PRICE_LEVEL_MODERATE",
+      "rating": 4.1,
+      "userRatingCount": 316,
+      "hours": {
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 0,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 0,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 0,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 1,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 2,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 3,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 4,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 5,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 6,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 6,
+              "hour": 22,
+              "minute": 30
+            }
+          }
+        ],
+        "weekdayDescriptions": []
+      },
+      "currentHours": null,
+      "mapsUri": "https://maps.google.com/?cid=demo2",
+      "reservable": null,
+      "photoName": null
+    },
+    {
+      "id": "demo_3",
+      "name": "中華そば 一灯",
+      "address": "新宿区新宿3-14",
+      "lat": 35.6941,
+      "lng": 139.7052,
+      "primaryType": "ramen_restaurant",
+      "primaryTypeLabel": "ラーメン",
+      "types": [
+        "ramen_restaurant",
+        "restaurant",
+        "food",
+        "point_of_interest"
+      ],
+      "priceRange": {
+        "lo": 1000,
+        "hi": 2000
+      },
+      "priceLevel": "PRICE_LEVEL_INEXPENSIVE",
+      "rating": 4.6,
+      "userRatingCount": 1580,
+      "hours": {
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 0,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 6,
+              "hour": 23,
+              "minute": 0
+            }
+          }
+        ],
+        "weekdayDescriptions": []
+      },
+      "currentHours": null,
+      "mapsUri": "https://maps.google.com/?cid=demo3",
+      "reservable": null,
+      "photoName": null
+    },
+    {
+      "id": "demo_4",
+      "name": "大衆酒場 のぐち",
+      "address": "新宿区新宿3-35",
+      "lat": 35.6902,
+      "lng": 139.7043,
+      "primaryType": "bar",
+      "primaryTypeLabel": "バー",
+      "types": [
+        "bar",
+        "restaurant",
+        "food",
+        "point_of_interest"
+      ],
+      "priceRange": {
+        "lo": 2000,
+        "hi": 3000
+      },
+      "priceLevel": null,
+      "rating": 3.8,
+      "userRatingCount": 527,
+      "hours": {
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 16,
+              "minute": 0
+            },
+            "close": {
+              "day": 0,
+              "hour": 23,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 16,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 23,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 16,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 23,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 16,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 23,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 16,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 23,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 16,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 23,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 16,
+              "minute": 0
+            },
+            "close": {
+              "day": 6,
+              "hour": 23,
+              "minute": 30
+            }
+          }
+        ],
+        "weekdayDescriptions": []
+      },
+      "currentHours": null,
+      "mapsUri": "https://maps.google.com/?cid=demo4",
+      "reservable": null,
+      "photoName": null
+    },
+    {
+      "id": "demo_5",
+      "name": "鮨処 かねさだ",
+      "address": "新宿区西新宿1-14",
+      "lat": 35.6903,
+      "lng": 139.6989,
+      "primaryType": "sushi_restaurant",
+      "primaryTypeLabel": "寿司",
+      "types": [
+        "sushi_restaurant",
+        "restaurant",
+        "food",
+        "point_of_interest"
+      ],
+      "priceRange": {
+        "lo": 10000,
+        "hi": 15000
+      },
+      "priceLevel": "PRICE_LEVEL_EXPENSIVE",
+      "rating": 4.5,
+      "userRatingCount": 203,
+      "hours": {
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 17,
+              "minute": 30
+            },
+            "close": {
+              "day": 0,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 17,
+              "minute": 30
+            },
+            "close": {
+              "day": 1,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 17,
+              "minute": 30
+            },
+            "close": {
+              "day": 2,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 17,
+              "minute": 30
+            },
+            "close": {
+              "day": 3,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 17,
+              "minute": 30
+            },
+            "close": {
+              "day": 4,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 17,
+              "minute": 30
+            },
+            "close": {
+              "day": 5,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 17,
+              "minute": 30
+            },
+            "close": {
+              "day": 6,
+              "hour": 23,
+              "minute": 0
+            }
+          }
+        ],
+        "weekdayDescriptions": []
+      },
+      "currentHours": null,
+      "mapsUri": "https://maps.google.com/?cid=demo5",
+      "reservable": true,
+      "photoName": null
+    },
+    {
+      "id": "demo_6",
+      "name": "トラットリア ヴェント",
+      "address": "新宿区新宿1-8",
+      "lat": 35.6875,
+      "lng": 139.7092,
+      "primaryType": "italian_restaurant",
+      "primaryTypeLabel": "イタリアン",
+      "types": [
+        "italian_restaurant",
+        "restaurant",
+        "food",
+        "point_of_interest"
+      ],
+      "priceRange": {
+        "lo": 4000,
+        "hi": 6000
+      },
+      "priceLevel": "PRICE_LEVEL_MODERATE",
+      "rating": 4,
+      "userRatingCount": 388,
+      "hours": {
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 0,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 0,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 0,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 1,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 2,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 3,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 4,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 5,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 6,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 6,
+              "hour": 22,
+              "minute": 30
+            }
+          }
+        ],
+        "weekdayDescriptions": []
+      },
+      "currentHours": null,
+      "mapsUri": "https://maps.google.com/?cid=demo6",
+      "reservable": true,
+      "photoName": null
+    },
+    {
+      "id": "demo_7",
+      "name": "四川料理 川辺",
+      "address": "新宿区新宿3-22",
+      "lat": 35.6934,
+      "lng": 139.7008,
+      "primaryType": "chinese_restaurant",
+      "primaryTypeLabel": "中華料理",
+      "types": [
+        "chinese_restaurant",
+        "restaurant",
+        "food",
+        "point_of_interest"
+      ],
+      "priceRange": {
+        "lo": 2000,
+        "hi": 3000
+      },
+      "priceLevel": null,
+      "rating": 4.2,
+      "userRatingCount": 671,
+      "hours": {
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 0,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 0,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 0,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 1,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 2,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 3,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 4,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 5,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 6,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 6,
+              "hour": 22,
+              "minute": 30
+            }
+          }
+        ],
+        "weekdayDescriptions": []
+      },
+      "currentHours": null,
+      "mapsUri": "https://maps.google.com/?cid=demo7",
+      "reservable": null,
+      "photoName": null
+    },
+    {
+      "id": "demo_8",
+      "name": "焼肉 白樺",
+      "address": "渋谷区代々木2-11",
+      "lat": 35.6849,
+      "lng": 139.7015,
+      "primaryType": "yakiniku_restaurant",
+      "primaryTypeLabel": "焼肉店",
+      "types": [
+        "yakiniku_restaurant",
+        "restaurant",
+        "food",
+        "point_of_interest"
+      ],
+      "priceRange": {
+        "lo": 5000,
+        "hi": 7000
+      },
+      "priceLevel": "PRICE_LEVEL_EXPENSIVE",
+      "rating": 4.1,
+      "userRatingCount": 912,
+      "hours": {
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 0,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 6,
+              "hour": 23,
+              "minute": 0
+            }
+          }
+        ],
+        "weekdayDescriptions": []
+      },
+      "currentHours": null,
+      "mapsUri": "https://maps.google.com/?cid=demo8",
+      "reservable": true,
+      "photoName": null
+    },
+    {
+      "id": "demo_9",
+      "name": "立ち飲み まるやま",
+      "address": "新宿区西新宿1-4",
+      "lat": 35.6912,
+      "lng": 139.7001,
+      "primaryType": "bar",
+      "primaryTypeLabel": "バー",
+      "types": [
+        "bar",
+        "restaurant",
+        "food",
+        "point_of_interest"
+      ],
+      "priceRange": {
+        "lo": 1000,
+        "hi": 2000
+      },
+      "priceLevel": null,
+      "rating": 3.9,
+      "userRatingCount": 244,
+      "hours": {
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 15,
+              "minute": 0
+            },
+            "close": {
+              "day": 0,
+              "hour": 23,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 15,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 23,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 15,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 23,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 15,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 23,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 15,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 23,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 15,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 23,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 15,
+              "minute": 0
+            },
+            "close": {
+              "day": 6,
+              "hour": 23,
+              "minute": 30
+            }
+          }
+        ],
+        "weekdayDescriptions": []
+      },
+      "currentHours": null,
+      "mapsUri": "https://maps.google.com/?cid=demo9",
+      "reservable": null,
+      "photoName": null
+    },
+    {
+      "id": "demo_10",
+      "name": "カフェ 木洩れ日",
+      "address": "新宿区新宿3-1",
+      "lat": 35.6889,
+      "lng": 139.7024,
+      "primaryType": "cafe",
+      "primaryTypeLabel": "カフェ",
+      "types": [
+        "cafe",
+        "restaurant",
+        "food",
+        "point_of_interest"
+      ],
+      "priceRange": {
+        "lo": 1000,
+        "hi": 2000
+      },
+      "priceLevel": null,
+      "rating": 4,
+      "userRatingCount": 455,
+      "hours": {
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 9,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 20,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 9,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 20,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 9,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 20,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 9,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 20,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 9,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 20,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 9,
+              "minute": 0
+            },
+            "close": {
+              "day": 6,
+              "hour": 20,
+              "minute": 0
+            }
+          }
+        ],
+        "weekdayDescriptions": []
+      },
+      "currentHours": null,
+      "mapsUri": "https://maps.google.com/?cid=demo10",
+      "reservable": null,
+      "photoName": null
+    },
+    {
+      "id": "demo_11",
+      "name": "タイ屋台 バーンチャン",
+      "address": "新宿区新宿5-17",
+      "lat": 35.6957,
+      "lng": 139.7043,
+      "primaryType": "thai_restaurant",
+      "primaryTypeLabel": "タイ料理",
+      "types": [
+        "thai_restaurant",
+        "restaurant",
+        "food",
+        "point_of_interest"
+      ],
+      "priceRange": {
+        "lo": 2000,
+        "hi": 3000
+      },
+      "priceLevel": null,
+      "rating": 4.2,
+      "userRatingCount": 289,
+      "hours": {
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 0,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 1,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 2,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 3,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 4,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 5,
+              "hour": 23,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 6,
+              "hour": 23,
+              "minute": 0
+            }
+          }
+        ],
+        "weekdayDescriptions": []
+      },
+      "currentHours": null,
+      "mapsUri": "https://maps.google.com/?cid=demo11",
+      "reservable": null,
+      "photoName": null
+    },
+    {
+      "id": "demo_12",
+      "name": "韓国食堂 ハヌル",
+      "address": "渋谷区渋谷1-14",
+      "lat": 35.6624,
+      "lng": 139.7043,
+      "primaryType": "korean_restaurant",
+      "primaryTypeLabel": "韓国料理",
+      "types": [
+        "korean_restaurant",
+        "restaurant",
+        "food",
+        "point_of_interest"
+      ],
+      "priceRange": {
+        "lo": 3000,
+        "hi": 4000
+      },
+      "priceLevel": null,
+      "rating": 3.7,
+      "userRatingCount": 633,
+      "hours": {
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 0,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 0,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 0,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 1,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 2,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 3,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 4,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 5,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 22,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 11,
+              "minute": 30
+            },
+            "close": {
+              "day": 6,
+              "hour": 14,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 17,
+              "minute": 0
+            },
+            "close": {
+              "day": 6,
+              "hour": 22,
+              "minute": 30
+            }
+          }
+        ],
+        "weekdayDescriptions": []
+      },
+      "currentHours": null,
+      "mapsUri": "https://maps.google.com/?cid=demo12",
+      "reservable": null,
+      "photoName": null
+    },
+    {
+      "id": "demo_13",
+      "name": "洋食 グリル春日",
+      "address": "千代田区丸の内2-4",
+      "lat": 35.6828,
+      "lng": 139.7627,
+      "primaryType": "american_restaurant",
+      "primaryTypeLabel": "洋食",
+      "types": [
+        "american_restaurant",
+        "restaurant",
+        "food",
+        "point_of_interest"
+      ],
+      "priceRange": {
+        "lo": 2000,
+        "hi": 3000
+      },
+      "priceLevel": null,
+      "rating": 4.2,
+      "userRatingCount": 690,
+      "hours": {
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 0,
+              "hour": 21,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 21,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 21,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 21,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 21,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 21,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 6,
+              "hour": 21,
+              "minute": 0
+            }
+          }
+        ],
+        "weekdayDescriptions": []
+      },
+      "currentHours": null,
+      "mapsUri": "https://maps.google.com/?cid=demo13",
+      "reservable": null,
+      "photoName": null
+    },
+    {
+      "id": "demo_14",
+      "name": "우동 やまだ",
+      "address": "新宿区新宿4-1",
+      "lat": 35.6897,
+      "lng": 139.704,
+      "primaryType": "japanese_restaurant",
+      "primaryTypeLabel": "和食",
+      "types": [
+        "japanese_restaurant",
+        "restaurant",
+        "food",
+        "point_of_interest"
+      ],
+      "priceRange": {
+        "lo": 1000,
+        "hi": 2000
+      },
+      "priceLevel": null,
+      "rating": 4.3,
+      "userRatingCount": 410,
+      "hours": {
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 0,
+              "hour": 22,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 22,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 22,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 22,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 22,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 22,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 11,
+              "minute": 0
+            },
+            "close": {
+              "day": 6,
+              "hour": 22,
+              "minute": 0
+            }
+          }
+        ],
+        "weekdayDescriptions": []
+      },
+      "currentHours": null,
+      "mapsUri": "https://maps.google.com/?cid=demo14",
+      "reservable": null,
+      "photoName": null
+    }
+  ]
+}

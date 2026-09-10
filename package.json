@@ -2,11 +2,9 @@
   "name": "meshi",
   "private": true,
   "type": "module",
-  "description": "东京餐厅推荐 — /search Edge Function 与营业时间解析器",
+  "description": "东京餐厅推荐 — /search Edge Function（Google Places）",
   "scripts": {
     "test": "node --test \"supabase/functions/**/*.test.ts\"",
-    "dev": "node --env-file-if-exists=.env scripts/dev-server.mjs",
-    "check:api": "node --env-file-if-exists=.env scripts/check-api.mjs",
-    "sample:open": "node --env-file-if-exists=.env scripts/sample-open.mjs"
+    "dev": "node --env-file-if-exists=.env scripts/dev-server.mjs"
   }
 }
