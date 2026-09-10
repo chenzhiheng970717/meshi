@@ -2,7 +2,7 @@
 
 ## 里程碑
 
-### M0 — 界面评审 ✅ 进行中
+### M0 — 界面评审 ✅ 基本完成
 
 把交互和信息架构定下来，不碰后端。
 
@@ -19,43 +19,55 @@
 
 ### M1 — 数据管道
 
-- [ ] 申请 HotPepper API Key ← **关键路径，有审核等待，尽早做**
-- [x] 拉取 genre / budget 主数据码表 —— `_shared/master.ts`：从 master API 拉 + 缓存 24h，失败回落快照；`GET /masters`
-- [x] 抽真实 `open` 字段分析格式 —— `npm run sample:open` 跑了 184 条，解析器 status 全 ok；结论见 `docs/api-response.md`
-- [x] 营业时间解析器 + 单元测试 —— `_shared/openHours.ts`，含 `open` / `close` 两个解析器，37 条测试
-- [x] `/search` 管道骨架：可达半径、硬过滤、加权打分、多中心点采样 + 去重、分批 —— `_shared/pipeline.ts`
-- [x] `/search` 契约 + 前端接入 —— 见 `docs/contract.md`；原型 `?api=` 切后端，默认仍是自包含演示数据
-- [x] 本地开发服务器 —— `npm run dev`（Node，无需 Deno / Supabase CLI）
-- [x] 接真实 HotPepper：`npm run check:api` 跑通，字段假设已校准（`non_smoking` 多出 `未確認`、
-      budget 码表细分成 17 档、`mobile_access` 有时是广告文案）。原型 `?api=` 已能看真实数据
-- [ ] **Google Cloud 配额熔断**（ADR-004/007）← 启用 Google API 当天必做：Places 200/天、Geocoding 500/天上限
-- [ ] 接 Google Places 取 `rating` / `userRatingCount`（服务端 + 24h 缓存 + 当日调用硬上限），替换合成人气分展示
-- [ ] 接 Google Geocoding：出发地自由文本 → 经纬度，替换固定演示地址库
-- [ ] 打分调优：从繁忙车站搜时 distance / budget / 人气 分都容易顶格，前 5 名区分度低（等 Google 评分接进来一起调，权重服务端可调）
-- [ ] Supabase 项目初始化
-- [ ] Edge Function 部署（`supabase/functions/search/index.ts` HTTP 壳已写）+ 24h 缓存
-- [ ] 前端把演示数据整段换成真实数据（真实照片 `photo.pc.l`、真实营业信息）—— 抽屉已接，卡片缩略图待接
+**已搭好的通用管道**（数据源无关）：
+
+- [x] `/search` 契约 + 前端接入 —— `docs/contract.md`；原型 `?api=` 切后端，默认自包含演示
+- [x] 可达半径换算、加权打分、分批、`X-App-Token` 鉴权 —— `_shared/{reach,score,pipeline}.ts`
+- [x] 本地开发服务器 `npm run dev`；47 条单元测试
+- [x] Edge Function 部署到 Supabase（`search`，region 东京），secret 管理
+- [x] 前端演示版 → GitHub Pages；真实数据版 `?api=` + `?token=`
+- [x] Google Places 评分 + Geocoding（正向 / 反向）—— `_shared/google.ts`，双熔断
+- [x] 真实照片、Google 评分展示、定位显示地址
+
+**HotPepper 阶段**（ADR-008 后弃用，代码保留在 git 历史）：
+
+- [x] ~~接 HotPepper グルメサーチ + master API + 营业时间自由文本解析器~~ —— 都做过、跑通过；
+      因住宅区覆盖太薄改用 Google，见 ADR-008
+
+**转 Google Places（ADR-008）—— 当前工作**：
+
+- [ ] Google Cloud 配额调整：SearchNearby/SearchText 100–300/天、GetPhotoMedia 300/天、
+      Geocoding 300/天，其余压到 1
+- [ ] `_shared/places.ts`：Text/Nearby Search 客户端，翻页凑 ~60 候选，字段掩码取
+      `priceRange` / `rating` / `regularOpeningHours` / `primaryType` / `photos`
+- [ ] genre → Google `primaryType` / `includedType` 映射表
+- [ ] `regularOpeningHours` → 现有营业判断逻辑（结构化，删 `openHours.ts` 自由文本解析）
+- [ ] `priceRange` → 预算区间重叠过滤
+- [ ] 人数降级为软提示；包间标签换成 `reservable`「可预约」
+- [ ] Google 照片：`photos[].name` → Photo Media 端点（服务端代理 or 缓存）
+- [ ] 页脚「Powered by Google」；去掉 HotPepper 署名
+- [ ] 打分调优：距离 / 预算项在繁忙车站搜索时易顶格，调分数曲线
 
 ### M2 — 账号与持久化
 
 - [ ] Supabase Auth 邮箱 OTP
 - [ ] 匿名会话（游客模式）与登录后合并本地数据
 - [ ] 标记、常用地址、选定记录落库
-- [ ] 评分来源决策落地（见 ADR-004）
+- [ ] 持久化缓存（Deno KV / Supabase 表，≤30 天）—— 省 Google 配额，替代现在的进程内缓存
+- [ ] 自建「喜欢」比例开始作为人气信号（ADR-004）
 
 ### M3 — 上线
 
 - [ ] Vite + React 重构（原型现为原生 HTML）
 - [ ] 空结果 / 网络错误 / 定位拒绝的兜底
-- [ ] HotPepper 署名与 logo
+- [ ] 页脚「Powered by Google」
 - [ ] 隐私政策
-- [ ] Cloudflare Pages 部署 + 自定义域名
+- [ ] Cloudflare Pages 部署 + 自定义域名（正式版前端，构建期注入 api / token）
 - [ ] 找 5–10 个在东京的人试用
 
 ### 之后
 
-- Google Places 补长尾与评分
-- 地图视图
+- 地图视图（MapLibre）
 - 多人投票选店
 - iOS 壳（算法稳定后）
 
@@ -67,24 +79,26 @@
 
 | 优先级 | 事项 | 阻塞 |
 |---|---|---|
-| 🔴 now | Google Cloud Console 设配额熔断（Places 200/天、Geocoding 500/天） | 需先建 GCP 项目 |
-| 🔴 now | Google key 填进 `.env` 的 `GOOGLE_PLACES_API_KEY` | 上一条 |
-| 🟡 next | 接 Google Places 评分 + Geocoding（服务端 + 缓存 + 当日硬上限） | Google key |
-| 🟡 next | 打分调优（繁忙车站前 5 名区分度低） | Google 评分接进来 |
+| 🔴 now | Google Cloud 配额调整（SearchNearby/Text 100–300、Photo 300、Geocoding 300，其余→1） | — |
+| 🔴 now | 数据层换 Google Places（`_shared/places.ts` + genre 映射 + priceRange 过滤 + 营业时间） | ADR-008 已定 |
+| 🟡 next | Google 照片接入（Photo Media 端点，服务端代理 / 缓存） | 上一条 |
+| 🟡 next | 打分调优（繁忙车站前 5 名区分度低，调分数曲线） | — |
 | 🟡 next | 「就这家 → 评价」闭环交互定稿 | 需产品决策 |
+| 🟡 next | 人数输入去留（软提示 or 直接删）| 需产品决策 |
 | 🟡 next | 移动端真机复核 | — |
-| 🟢 later | Supabase 项目 + Edge Function 部署 + 24h 缓存 | — |
-| 🟢 later | Vite + React 重构 | 界面定稿 |
+| 🟢 later | 持久化缓存（省配额）；Vite + React 重构；Cloudflare Pages 正式前端 | — |
 
-✅ 已完成：申请 HotPepper Key、确认评分来源（ADR-004→Google Places）、`open` 字段抽样分析、
-真实 key 跑通 `/search`、地理编码选型（ADR-007→Google Geocoding）。
+✅ 已完成：`/search` 管道 + 契约、Supabase 部署、GitHub Pages 演示版、Google 评分 + Geocoding、
+真实照片、定位显示地址。HotPepper 全链路做过又因覆盖问题弃用（ADR-008）。
 
 ---
 
 ## 待决策问题
 
-**1. 评分从哪来？** ✅ 已定：Google Places（ADR-004）。前提是先设 Google 配额熔断。
+**1. 评分从哪来？** ✅ 已定：Google Places（ADR-004 / ADR-008 —— Google 现在就是数据源本身）。
 
-**2.「就这家」和「吃过」怎么联动？** 现在两者独立。可能的闭环：点了「就这家」→ 到了就餐时间之后 → 提示「今晚去了 XX 吗？」→ 自动标记「吃过」并请求打分（喜欢 / 不喜欢）。这样标记数据能自然积累，不需要用户主动想起来。需要确认是否要做时间触发的提示。
+**2.「就这家」和「吃过」怎么联动？** 现在两者独立。可能的闭环：点了「就这家」→ 到了就餐时间之后 → 提示「今晚去了 XX 吗？」→ 自动标记「吃过」并请求打分（喜欢 / 不喜欢）。需要确认是否要做时间触发的提示。
 
-**3. 照片。** ✅ 已定：正式版用真实照片（HotPepper `photo.pc.l`）。无照片的店保留矢量插画作兜底（风格和整体视觉搭）。**注意**：HotPepper 最大图只有 238px 宽，详情页做不了大图 hero（见 api-response.md 坑 #2）。
+**3. 照片。** ✅ 已定：真实照片（Google `photos`），无照片的店保留矢量插画兜底。Google 照片走 Photo Media 端点，`maxWidthPx` 可以要到 1600，详情页大图可行（比 HotPepper 238px 强）。
+
+**4. 人数输入。** Google 无 `party_capacity`（ADR-008）。当前：降级为软提示。待定是否直接从表单删掉「人数」。

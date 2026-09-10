@@ -2,7 +2,8 @@
 
 东京餐厅推荐应用。用户输入出发地、就餐时间、交通方式、可接受路程时长、人数、口味、人均预算，返回排好序的五家店并说明推荐理由。
 
-**当前阶段：M0 界面评审。** 交互原型已完成，后端未接入。全部店铺数据是演示数据。
+**当前阶段：M1 数据管道。** `/search` Edge Function 已部署到 Supabase，前端演示版在 GitHub Pages。
+数据源正从 HotPepper 切到 Google Places（见 ADR-008）。
 
 开工前先读 `docs/roadmap.md`（当前待办与待决策）和 `docs/decisions.md`（已定的架构决策，不要重新讨论）。
 
@@ -12,11 +13,11 @@
 
 违反这些会导致真实损失，优先级高于任何其他考虑。
 
-**API Key 绝不进客户端、绝不进仓库。** HotPepper Key 只存在于 Supabase Edge Function 的环境变量里。前端只调自己的 `/search`。Key 一旦进了 git 历史，删文件也没用——历史里还在，只能去 Recruit 后台重新生成。
+**API Key 绝不进客户端、绝不进仓库。** Google key（Places + Geocoding 共用）和 `APP_TOKEN` 只存在于 Supabase Edge Function 的 secret 里。前端只调自己的 `/search`，带 `X-App-Token` 头。Key 进了 git 历史，删文件也没用——历史里还在，只能去 Cloud Console 重新生成。真实前端地址（含 token）不写进仓库。
 
-**HotPepper 数据不得落库。** Recruit 条款要求：缓存 ≤ 24 小时，不得复制进第三方数据库。Postgres 只存用户、标记、常用地址。页脚必须显示「Powered by ホットペッパーグルメ」署名与官方 logo，不可移除。商用变现需事先书面同意。
+**Google Places 配额熔断是硬要求。** 数据源就是 Google Places（ADR-008），`priceRange` / `rating` 都是 Enterprise 字段。两道熔断：① Cloud Console → Quotas 设每日请求数上限（SearchNearby / SearchText 100–300、GetPhotoMedia 300、Geocoding 300，其余压到 1）；② 代码里 `_shared/google.ts` 的进程内当日调用硬计数。预算告警只发邮件不阻断计费，配额才是熔断器。一个 `useEffect` 依赖写错就能烧掉四位数美元。
 
-**Google Places 要先设配额熔断。** 若启用，当天就在 Cloud Console 设每日请求数上限（Quotas，建议 200/天）。预算告警只发邮件不阻断计费。`rating` / `priceLevel` / `regularOpeningHours` 都是 Enterprise 字段，每月仅 1000 次免费，超出 $35/千次——一个 `useEffect` 依赖写错就能烧掉四位数美元。
+**Google 数据的缓存与署名。** Place ID 可长期存；其它内容（评分、营业时间、`priceRange`）缓存 ≤ 30 天。展示 Google 数据的页面要有「Powered by Google」。Postgres 只存用户、标记、常用地址（坐标 + 原始输入），不存店铺数据。
 
 **游客必须能直接搜索。** 核心功能不得强制登录。这既是产品判断，也是将来做 iOS 时 App Store 条款 5.1.1(v) 的硬要求。
 
@@ -30,8 +31,9 @@
 |---|---|
 | 平台 | 网页优先，iOS 壳等算法稳定后再加。微信小程序已排除 |
 | 前端 | Vite + React（原型阶段是原生 HTML 单文件） |
-| 店铺数据 | HotPepper グルメサーチAPI（免费，原生支持预算/人数/包间） |
-| 后端 | Supabase Edge Function（持 Key + 缓存 + 打分） |
+| 店铺数据 | Google Places API (New) — Text/Nearby Search（ADR-008，取代 HotPepper）。带 `priceRange` 真实人均、结构化营业时间、评分 |
+| 地理编码 | Google Geocoding（同一个 key，ADR-007） |
+| 后端 | Supabase Edge Function（持 Key + 缓存 + 打分 + `X-App-Token` 鉴权） |
 | 数据库 | Supabase Postgres |
 | 认证 | Supabase Auth 邮箱 OTP + 匿名会话。**不做短信登录** |
 | 地图 | MapLibre + 免费瓦片 |
@@ -43,7 +45,9 @@
 
 打分逻辑放服务端，改权重不用发版。
 
-**硬过滤**：营业时间（含 L.O. 提前 1 小时余量）、可达半径、预算区间重叠、`party_capacity` ≥ 人数、口味分类命中。
+**硬过滤**：营业时间（`regularOpeningHours`，L.O. 提前 1 小时余量）、可达半径、`priceRange` 与用户预算区间重叠、口味（Google `primaryType` 命中）。
+
+**人数不再硬过滤**（Google 无 `party_capacity`，见 ADR-008）：人数 ≥ 8 且店铺明显偏小时，推荐理由提示「大团请先电话确认」。包间标签去掉，`reservable` 作「可预约」弱替代。
 
 **加权打分**：
 
@@ -60,11 +64,11 @@ score = 0.30·距离 + 0.25·口味 + 0.20·人气 + 0.15·预算 + 0.10·场景
 | 电车 | `max(0, T − 12) × 400 m/min` |
 | 驾车 | `max(0, T − 10) × 300 m/min` |
 
-**HotPepper `range` 上限 3km。** 目标半径更大时按 8 个方位角多中心点采样，按 `shop.id` 去重合并。
+**候选池**：Google Nearby / Text Search 每页最多 20 条，翻页最多 3 页 = 60 条。半径无 3km 限制（上限 50km），不需要多中心点采样。目标半径 > ~5km 时用 Text Search + `locationBias`，否则 Nearby + `locationRestriction`。
 
-**`open` 字段是自由文本**，形如「月～金 17:00～23:30（L.O.23:00）、土日祝 16:00～24:00」。写解析器之前先抽 100 条真实数据人工看格式，别凭想象写正则。解析失败时降级为不过滤 + UI 标注「营业时间请以店家为准」。
+**营业时间** 用 `regularOpeningHours`（结构化，`periods[]` + `weekdayDescriptions[]`），不用解析自由文本。`currentOpeningHours` 已含节假日调整。跨夜 period 的 `close.day` 会是次日。
 
-**genre / budget 码表动态拉取**，通过对应的 master API，不要硬编码。
+**口味** 把用户选的分类映射到 Google `primaryType`（`ramen_restaurant` / `sushi_restaurant` / `izakaya`(用 `bar`+`japanese_restaurant` 近似) / `italian_restaurant` …）或 `includedType`。映射表见 `_shared/`。
 
 ---
 
@@ -96,25 +100,31 @@ score = 0.30·距离 + 0.25·口味 + 0.20·人气 + 0.15·预算 + 0.10·场景
 - 提交信息用 Conventional Commits：`feat(ui): 出发地支持门牌号输入`。范围用 `ui` / `score` / `api` / `auth` / `geo` / `data`。
 - 正文写**为什么**这么改，不是改了什么——diff 已经说明改了什么。
 - 提交前用 `git add -p` 分块暂存，能拦下顺手写的调试代码。
-- 版本标签遵循语义化版本，原型阶段停在 `0.x`。接通 HotPepper 并跑通端到端时发 `1.0.0`。
+- 版本标签遵循语义化版本，原型阶段停在 `0.x`。接通真实数据并跑通端到端时发 `1.0.0`。
 
 ---
 
-## 三个待决策问题 —— 不要擅自决定
+## 待决策问题 —— 不要擅自决定
 
 需要产品方拍板，遇到时问，别自己选一个然后往下写。
 
-1. **评分数据来源。** HotPepper 不返回 `rating` / `reviews`。选项：接 Google Places（Enterprise 字段，单人使用免费额度够）/ 只显示自建的「喜欢」比例 / 不显示评分改显示合成人气分。详见 ADR-004。
+1. ~~评分数据来源~~ —— 已定：Google Places（ADR-004 / ADR-008）。
 2. **「就这家 → 吃过 → 评价」的闭环。** 现在两个标记独立。可能做成时间触发：就餐时间过后提示「今晚去了 XX 吗？」，自动标记吃过并请求打分。是否要做时间触发提示未定。
-3. **矢量插画是否保留**作为无照片店铺的兜底。正式版照片用 `photo.pc.l`。
+3. ~~矢量插画兜底~~ —— 已定：正式版用真实照片（Google `photos`），无照片的店保留插画。
+4. **人数输入怎么处理**（ADR-008）：Google 无 `party_capacity`。当前决定是降级为软提示。是否干脆从表单去掉「人数」这个输入，待定。
 
 ---
 
 ## 常用命令
 
 ```bash
-# 本地打开原型（定位功能需要 localhost 或 https）
-python3 -m http.server 8000 --directory prototype
+# 本地起后端 + 静态托管原型（无需 Deno / Supabase CLI）
+npm run dev          # http://localhost:8787，读 .env
+npm test             # 单元测试
+npm run check:api    # 有 key 时审计真实 API 字段
+
+# 部署 Edge Function（.env 里要有 SUPABASE_ACCESS_TOKEN）
+npx supabase functions deploy search
 
 # 看历史
 git log --oneline --graph --decorate -20
