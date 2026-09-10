@@ -567,9 +567,27 @@ var State={
  date:new Date().toISOString().slice(0,10), time:"19:00",
  mode:"walk", mins:20, party:2, genres:[], bmin:2000, bmax:5000,
  batch:0, picked:store("picked")||null,
- marks:store("marks")||{}, saved:store("saved")||[{addr:"東京都新宿区新宿3-38-1",near:"新宿駅 東口",lat:35.6912,lng:139.7020}],
+ marks:migrateMarks(store("marks")||{}), saved:store("saved")||[{addr:"東京都新宿区新宿3-38-1",near:"新宿駅 東口",lat:35.6912,lng:139.7020}],
  fEaten:false, fLiked:false
 };
+
+/* 标记模型：marks[id] = { eaten:bool, op:"like"|"dislike"|null }
+   吃过 是独立布尔；喜欢 / 不喜欢 二选一，和吃过不互斥。 */
+function migrateMarks(m){
+ var out={};
+ Object.keys(m||{}).forEach(function(id){
+  var v=m[id];
+  if(v && typeof v==="object"){ out[id]={eaten:!!v.eaten, op:v.op||null}; }
+  else if(v==="eaten") out[id]={eaten:true, op:null};      // 旧的单值格式
+  else if(v==="like"||v==="dislike") out[id]={eaten:false, op:v};
+ });
+ return out;
+}
+function getMark(id){ return State.marks[id] || {eaten:false, op:null}; }
+function setMark(id,mk){
+ if(!mk.eaten && !mk.op) delete State.marks[id]; else State.marks[id]=mk;
+ store("marks",State.marks);
+}
 
 /* ---------- 工具 ---------- */
 function dist(a,b,c,d){var R=6371000,p=Math.PI/180,dl=(c-a)*p,dg=(d-b)*p;
@@ -623,7 +641,10 @@ function buildRequest(){
   batch:State.batch
  };
 }
-function markIds(kind){return Object.keys(State.marks).filter(function(k){return State.marks[k]===kind;});}
+function markIds(kind){return Object.keys(State.marks).filter(function(k){
+ var m=State.marks[k];
+ return kind==="eaten" ? m.eaten : m.op===kind;
+});}
 
 var SMOKE_TO_PROTO={full:"full","partial":"part",none:"none",unknown:"full"};
 function rowFromResult(x){
@@ -656,7 +677,7 @@ function search(){
     var notes=(resp.notes||[]).slice();
     // 「只看喜欢的」是纯前端筛选，服务端没有这个概念——对当前批做客户端过滤
     if(State.fLiked){
-     rows=rows.filter(function(r){return State.marks[r.s.id]==="like";});
+     rows=rows.filter(function(r){return getMark(r.s.id).op==="like";});
      notes.push("「只看喜欢的」为本地筛选，仅作用于当前批次");
     }
     return {rows:rows,rej:mapRej(resp.rejected),
@@ -679,9 +700,10 @@ var W=[{k:"dist",n:"距离",w:.30,c:"var(--accent)"},{k:"gen",n:"口味",w:.25,c
 function evaluate(){
  var R=radius(),H=hourNum(),out=[],rej={dist:0,time:0,cap:0,bud:0,gen:0,dis:0};
  SHOPS.forEach(function(s){
-  if(State.marks[s.id]==="dislike"){rej.dis++;return;}
-  if(State.fLiked && State.marks[s.id]!=="like") return;
-  if(State.fEaten && State.marks[s.id]==="eaten") return;
+  var m=getMark(s.id);
+  if(m.op==="dislike"){rej.dis++;return;}
+  if(State.fLiked && m.op!=="like") return;
+  if(State.fEaten && m.eaten) return;
   var d=dist(State.origin.lat,State.origin.lng,s.lat,s.lng);
   if(d>R){rej.dist++;return;}
   if(!(H>=s.open[0] && H<=s.open[1]-1)){rej.time++;return;}
@@ -815,7 +837,7 @@ function paint(res){
  }
 
  page.forEach(function(r,i){
-  var s=r.s,g=GMAP[s.g]||{n:s.gName||"餐厅"},mk=State.marks[s.id],picked=State.picked===s.id;
+  var s=r.s,g=GMAP[s.g]||{n:s.gName||"餐厅"},mk=getMark(s.id),picked=State.picked===s.id;
   var rank=State.batch*5+i+1;
   var c=el("div","card"+(rank===1?" best":"")+(picked?" picked":""));
   var pays=(s.card?'<span class="pay">'+ico("card")+'可刷卡</span>':'')+
@@ -837,9 +859,9 @@ function paint(res){
      '<div class="why">'+ico("spark")+'<span>'+(r.whyText||why(r))+'</span></div>'+
      '<div class="pays">'+(s.room?'<span class="pay">'+ico("room")+'包间</span>':'')+pays+'</div>'+
      '<div class="cacts">'+
-       '<button class="tog'+(mk==="eaten"?" on-eat":"")+'" data-act="eaten">'+ico("check")+'吃过</button>'+
-       '<button class="tog'+(mk==="like"?" on-like":"")+'" data-act="like">'+ico("heart")+'喜欢</button>'+
-       '<button class="tog'+(mk==="dislike"?" on-dis":"")+'" data-act="dislike">'+ico("x")+'不喜欢</button>'+
+       '<button class="tog'+(mk.eaten?" on-eat":"")+'" data-act="eaten">'+ico("check")+'吃过</button>'+
+       '<button class="tog'+(mk.op==="like"?" on-like":"")+'" data-act="like">'+ico("heart")+'喜欢</button>'+
+       '<button class="tog'+(mk.op==="dislike"?" on-dis":"")+'" data-act="dislike">'+ico("x")+'不喜欢</button>'+
        '<button class="detail" data-act="detail">详情</button>'+
        '<button class="pick'+(picked?" on":"")+'" data-act="pick">'+ico(picked?"check":"bowl")+(picked?"已选定":"就这家")+'</button>'+
      '</div>'+
@@ -861,21 +883,15 @@ function paint(res){
 }
 
 function mark(s,kind){
- var prev=State.marks[s.id]||null;
- if(prev===kind){delete State.marks[s.id];}
- else{State.marks[s.id]=kind;}
- store("marks",State.marks);
- var label={eaten:"吃过",like:"喜欢",dislike:"不喜欢"}[kind];
- if(State.marks[s.id]===kind){
-  if(kind==="dislike"){
-   toast(s.name+" 已标记为不喜欢，之后不再推荐","撤销",function(){
-    if(prev)State.marks[s.id]=prev; else delete State.marks[s.id];
-    store("marks",State.marks); render();
-   });
-  } else toast(s.name+" 已标记为「"+label+"」","撤销",function(){
-    if(prev)State.marks[s.id]=prev; else delete State.marks[s.id];
-    store("marks",State.marks); render();
-  });
+ var prev={eaten:getMark(s.id).eaten, op:getMark(s.id).op}; // 深拷贝用于撤销
+ var next={eaten:prev.eaten, op:prev.op};
+ var label={eaten:"吃过",like:"喜欢",dislike:"不喜欢"}[kind], added;
+ if(kind==="eaten"){ next.eaten=!prev.eaten; added=next.eaten; }
+ else{ next.op = (prev.op===kind ? null : kind); added=(next.op===kind); } // 喜欢/不喜欢 二选一
+ setMark(s.id,next);
+ if(added){
+  var msg = kind==="dislike" ? s.name+" 已标记为不喜欢，之后不再推荐" : s.name+" 已标记为「"+label+"」";
+  toast(msg,"撤销",function(){ setMark(s.id,prev); render(); });
  } else toast("已取消 "+s.name+" 的「"+label+"」标记");
  render();
 }
