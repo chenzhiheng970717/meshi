@@ -49,7 +49,15 @@ export interface ShopResult {
   lng: number;
   distanceM: number;
   etaMinutes: number;
-  budget: { code: string; name: string; average: string; mid: number };
+  /** lo/hi 是人均区间（円），前端显示这个；mid 是中位数，只作兜底 */
+  budget: {
+    code: string;
+    name: string;
+    average: string;
+    lo: number;
+    hi: number;
+    mid: number;
+  };
   photo: { s: string; m: string; l: string } | null;
   /** urls.pc，含 vos= 追踪参数，原样透传，不得改写 */
   url: string;

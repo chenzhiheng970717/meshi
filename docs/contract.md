@@ -52,7 +52,7 @@
 | 字段 | 说明 |
 |---|---|
 | `distanceM` / `etaMinutes` | 直线距离 / 按交通方式估算的到达用时 |
-| `budget.mid` | 从 `budget.name` 区间解析的中位数，打分用；`budget.average` 仅展示 |
+| `budget.lo` / `budget.hi` | 人均区间（円），前端显示这个。`mid` 是中位数，仅兜底；`average` 仅展示 |
 | `hours.todayLabel` | 目标那天的营业时段，如 `"17:00–翌00:00"`；解析不出为 `null` |
 | `hours.lastOrderMin` / `lastOrderLabel` | 目标那天的料理 L.O. |
 | `hours.openAtTarget` | `true` / `false` / `"unknown"`（未能判断，已降级为不过滤） |
@@ -66,16 +66,18 @@
 
 ## 打分
 
-硬过滤：定休日 → 可达半径 → 人数 → 预算区间重叠 → 口味 → 营业时间（含 L.O. 提前
+硬过滤：定休日 → 可达半径 → 预算区间重叠（含 10% 容差）→ 口味 → 营业时间（含 L.O. 提前
 `LO_MARGIN_MIN`＝60 分钟余量）。营业时间解析失败或目标日无排班时**不过滤**，`hours.disclaimer=true`。
+人数不再硬过滤（ADR-008）。
 
 加权（权重在 [`score.ts`](../supabase/functions/_shared/score.ts) `SCORE_WEIGHTS`，改了不用发版）：
 
 ```
-score = 0.30·距离 + 0.25·口味 + 0.20·人气 + 0.15·预算 + 0.10·场景
+score = 0.35·距离 + 0.25·口味 + 0.25·人气 + 0.05·预算 + 0.10·场景
 ```
 
-多中心点采样（半径 > 3km）见 [ADR-003](decisions.md#adr-003)，实现在 [`reach.ts`](../supabase/functions/_shared/reach.ts) `samplingCenters`。
+预算项＝区间覆盖率（`budgetCoverage`：店铺人均区间 ∩ 用户区间，占用户区间宽度的比例），
+权重低，只当微弱加分项。
 
 ---
 

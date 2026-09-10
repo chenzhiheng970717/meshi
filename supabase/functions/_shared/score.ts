@@ -3,16 +3,17 @@
 
 import type { ShopResult, Transport } from "./contract.ts";
 import type { RawShop } from "./hotpepper.ts";
-import { budgetOverlaps, parseBudgetName } from "./budget.ts";
+import { budgetCoverage, budgetOverlaps, parseBudgetName } from "./budget.ts";
 import { etaMinutes, haversineM } from "./reach.ts";
 import { evaluateOpen, parseClose, parseOpen } from "./openHours.ts";
 import { synthPopularity } from "./popularity.ts";
 
+// 预算权重压低：区间覆盖率只当小加分项，"完全超出预算"靠硬过滤（budgetOverlaps）挡。
 export const SCORE_WEIGHTS = {
-  distance: 0.30,
+  distance: 0.35,
   genre: 0.25,
-  popularity: 0.20,
-  budget: 0.15,
+  popularity: 0.25,
+  budget: 0.05,
   scene: 0.10,
 };
 
@@ -158,8 +159,6 @@ export function scoreShop(
 
   // --- 加权打分 ---
   const popularity = synthPopularity(shop);
-  const reqMid = (ctx.budgetMin + ctx.budgetMax) / 2;
-  const reqSpan = Math.max(1, (ctx.budgetMax - ctx.budgetMin) / 2);
 
   const room = parsePrefix(shop.private_room);
   const hasCourse = shop.course === "あり";
@@ -170,7 +169,7 @@ export function scoreShop(
     distance: clamp01(1 - eta / Math.max(1, ctx.maxMinutes)),
     genre: genreScore,
     popularity,
-    budget: bud ? clamp01(1 - Math.abs(bud.mid - reqMid) / reqSpan) : 0.5,
+    budget: bud ? budgetCoverage(bud, ctx.budgetMin, ctx.budgetMax) : 0.5,
     scene: clamp01(
       0.55 +
         (room?.available && ctx.party >= 4 ? 0.3 : 0) +
@@ -199,6 +198,8 @@ export function scoreShop(
       code: shop.budget?.code ?? "",
       name: shop.budget?.name ?? "",
       average: shop.budget?.average ?? "",
+      lo: bud?.lo ?? 0,
+      hi: bud?.hi ?? 0,
       mid: bud?.mid ?? 0,
     },
     photo: shop.photo?.pc?.l
@@ -241,8 +242,8 @@ export function scoreShop(
       transport: ctx.transport,
       eta,
       bud,
-      reqMid,
-      budgetBreakdown: breakdown.budget,
+      budgetMin: ctx.budgetMin,
+      budgetMax: ctx.budgetMax,
       room,
       party: ctx.party,
       cap,
@@ -267,12 +268,16 @@ const TRANSPORT_LABEL: Record<Transport, string> = {
   car: "驾车",
 };
 
+function yenRange(lo: number, hi: number): string {
+  return lo === hi ? `¥${lo}` : `¥${lo}–${hi}`;
+}
+
 function buildWhy(a: {
   transport: Transport;
   eta: number;
   bud: ReturnType<typeof parseBudgetName>;
-  reqMid: number;
-  budgetBreakdown: number;
+  budgetMin: number;
+  budgetMax: number;
   room: { available: boolean; detail: string } | null;
   party: number;
   cap: number;
@@ -286,8 +291,12 @@ function buildWhy(a: {
       : `${TRANSPORT_LABEL[a.transport]} 约 ${eta} 分钟`,
   );
   if (a.bud) {
-    if (a.budgetBreakdown > 0.75) bits.push(`人均 ¥${a.bud.mid} 正好在预算内`);
-    else if (a.bud.mid < a.reqMid) bits.push(`人均 ¥${a.bud.mid}，比预算省`);
+    const label = `人均 ${yenRange(a.bud.lo, a.bud.hi)}`;
+    if (a.bud.lo >= a.budgetMin && a.bud.hi <= a.budgetMax) {
+      bits.push(`${label}，在预算内`);
+    } else if (a.bud.hi <= (a.budgetMin + a.budgetMax) / 2) {
+      bits.push(`${label}，偏预算下段`);
+    }
   }
   if (a.room?.available && a.party >= 4) {
     bits.push("有包间");
