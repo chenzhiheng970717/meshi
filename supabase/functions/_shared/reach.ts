@@ -47,46 +47,4 @@ export function haversineM(
   return Math.round(2 * R * Math.asin(Math.sqrt(h)));
 }
 
-/**
- * 目标半径 > 3km 时的八方位多中心点采样点。
- * 以出发点为圆心、在目标半径上按 8 个方位角取点，每点发一次 range=5（5km）。
- * 见 ADR-003。
- */
-export function samplingCenters(
-  lat: number,
-  lng: number,
-  radiusM: number,
-): Array<{ lat: number; lng: number }> {
-  if (radiusM <= 3000) return [{ lat, lng }];
-  const centers: Array<{ lat: number; lng: number }> = [{ lat, lng }];
-  const earthR = 6371000;
-  for (let i = 0; i < 8; i++) {
-    const brng = (i * Math.PI) / 4;
-    const dr = radiusM / earthR;
-    const lat1 = (lat * Math.PI) / 180;
-    const lng1 = (lng * Math.PI) / 180;
-    const lat2 = Math.asin(
-      Math.sin(lat1) * Math.cos(dr) +
-        Math.cos(lat1) * Math.sin(dr) * Math.cos(brng),
-    );
-    const lng2 = lng1 +
-      Math.atan2(
-        Math.sin(brng) * Math.sin(dr) * Math.cos(lat1),
-        Math.cos(dr) - Math.sin(lat1) * Math.sin(lat2),
-      );
-    centers.push({
-      lat: (lat2 * 180) / Math.PI,
-      lng: (lng2 * 180) / Math.PI,
-    });
-  }
-  return centers;
-}
 
-/** HotPepper range 码：300/500/1000/2000/3000m 五档，取覆盖目标的最小档。 */
-export function rangeCode(radiusM: number): 1 | 2 | 3 | 4 | 5 {
-  if (radiusM <= 300) return 1;
-  if (radiusM <= 500) return 2;
-  if (radiusM <= 1000) return 3;
-  if (radiusM <= 2000) return 4;
-  return 5;
-}

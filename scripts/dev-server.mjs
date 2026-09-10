@@ -1,11 +1,12 @@
 // 本地开发服务器 —— 不需要 Deno / Supabase CLI。
 //
-//   npm run dev            # 起在 http://localhost:8787
+//   npm run dev            # http://localhost:8787
 //   POST /search           # 同 Edge Function 的契约
-//   GET  /                 # 把 prototype/ 静态托管，方便端到端点
+//   GET  /geocode?q=…      # 地址→坐标  /  ?lat=&lng= 反向
+//   GET  /                 # 静态托管 prototype/
 //
-// 跑的是和 supabase/functions/search 完全相同的 ../_shared 管道。
-// 设了 HOTPEPPER_API_KEY 环境变量就打真实 API，否则走演示数据。
+// 跑的是和 supabase/functions/search 完全相同的 ../_shared 管道（Google Places）。
+// 设了 GOOGLE_PLACES_API_KEY 就打真实 API，否则走演示数据。
 
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
@@ -17,13 +18,14 @@ import {
   normalizeRequest,
   runSearch,
 } from "../supabase/functions/_shared/pipeline.ts";
-import { getMasters } from "../supabase/functions/_shared/master.ts";
 import { createGoogle } from "../supabase/functions/_shared/google.ts";
-import mockData from "../supabase/functions/_shared/mock/gourmet-shops.json" with { type: "json" };
+import mockData from "../supabase/functions/_shared/mock/google-places.json" with {
+  type: "json",
+};
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const PROTOTYPE = join(ROOT, "prototype");
-const MOCK_SHOPS = mockData.shop;
+const MOCK = mockData.candidates;
 const PORT = Number(process.env.PORT ?? 8787);
 
 const MIME = {
@@ -33,7 +35,6 @@ const MIME = {
   ".svg": "image/svg+xml",
   ".json": "application/json; charset=utf-8",
 };
-
 const CORS = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "POST, GET, OPTIONS",
@@ -42,24 +43,18 @@ const CORS = {
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
-
   if (req.method === "OPTIONS") {
     res.writeHead(204, CORS).end();
     return;
   }
 
   const appToken = process.env.APP_TOKEN ?? "";
-  if (appToken && url.pathname !== "/" && !url.pathname.match(/\.(html|js|css|svg)$/) &&
-      req.headers["x-app-token"] !== appToken) {
+  const isApi = /^\/(search|geocode)/.test(url.pathname);
+  if (appToken && isApi && req.headers["x-app-token"] !== appToken) {
     return send(res, 401, { error: "未授权" });
   }
 
-  if (url.pathname === "/masters") {
-    const m = await getMasters(process.env.HOTPEPPER_API_KEY);
-    return send(res, 200, { genres: m.genres, budgets: m.budgets, source: m.source });
-  }
-
-  if (url.pathname === "/geocode" || url.pathname === "/search/geocode") {
+  if (url.pathname.endsWith("/geocode")) {
     const g = createGoogle({ key: process.env.GOOGLE_PLACES_API_KEY });
     if (!g.enabled) return send(res, 501, { error: "地理编码未配置（GOOGLE_PLACES_API_KEY）" });
     const sp = url.searchParams;
@@ -69,19 +64,13 @@ const server = createServer(async (req, res) => {
     return hit ? send(res, 200, hit) : send(res, 404, { error: "解析不出这个位置" });
   }
 
-  if (url.pathname === "/search") {
-    if (req.method !== "POST") {
-      return send(res, 405, { error: "只接受 POST" });
-    }
+  if (url.pathname.endsWith("/search")) {
+    if (req.method !== "POST") return send(res, 405, { error: "只接受 POST" });
     try {
-      const body = await readJson(req);
-      const search = normalizeRequest(body);
+      const search = normalizeRequest(await readJson(req));
       const out = await runSearch(search, {
-        env: {
-          HOTPEPPER_API_KEY: process.env.HOTPEPPER_API_KEY,
-          GOOGLE_PLACES_API_KEY: process.env.GOOGLE_PLACES_API_KEY,
-        },
-        mockShops: MOCK_SHOPS,
+        env: { GOOGLE_PLACES_API_KEY: process.env.GOOGLE_PLACES_API_KEY },
+        mockCandidates: MOCK,
       });
       return send(res, 200, out);
     } catch (err) {
@@ -92,7 +81,7 @@ const server = createServer(async (req, res) => {
   }
 
   // 静态托管 prototype/
-  let rel = url.pathname === "/" ? "/index.html" : url.pathname;
+  const rel = url.pathname === "/" ? "/index.html" : url.pathname;
   const path = normalize(join(PROTOTYPE, rel));
   if (!path.startsWith(PROTOTYPE)) {
     res.writeHead(403).end("forbidden");
@@ -109,11 +98,9 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  const mode = (process.env.HOTPEPPER_API_KEY ? "真实 HotPepper" : "演示数据 (mock)") +
-    (process.env.GOOGLE_PLACES_API_KEY ? " + Google 评分/地理编码" : "");
+  const mode = process.env.GOOGLE_PLACES_API_KEY ? "真实 Google Places" : "演示数据 (mock)";
   console.log(`meshi dev  →  http://localhost:${PORT}  [${mode}]`);
   console.log(`  原型:   http://localhost:${PORT}/?api=http://localhost:${PORT}`);
-  console.log(`  接口:   POST http://localhost:${PORT}/search`);
 });
 
 function readJson(req) {
@@ -130,10 +117,7 @@ function readJson(req) {
     req.on("error", reject);
   });
 }
-
 function send(res, status, body) {
-  res.writeHead(status, {
-    "content-type": "application/json; charset=utf-8",
-    ...CORS,
-  }).end(JSON.stringify(body));
+  res.writeHead(status, { "content-type": "application/json; charset=utf-8", ...CORS })
+    .end(JSON.stringify(body));
 }
