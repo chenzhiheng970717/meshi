@@ -428,7 +428,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     <div class="band-cols">
       <div><h5>数据来源</h5><p id="src-name">Powered by ホットペッパーグルメ</p><p class="dim" id="src-note">当前为演示数据；正式版显示官方 logo</p></div>
       <div><h5>覆盖范围</h5><p>東京 23 区</p><p class="dim">演示数据 24 家</p></div>
-      <div><h5>排序方式</h5><p>服务端规则打分 · 可解释</p><p class="dim">距离 30 / 口味 25 / 人气 20 / 预算 15 / 场景 10</p></div>
+      <div><h5>排序方式</h5><p>服务端规则打分 · 可解释</p><p class="dim">距离 35 / 口味 25 / 人气 25 / 预算 5 / 场景 10</p></div>
       <div><h5>版本</h5><p>Prototype v0.3 · /search 契约</p><p class="dim">界面评审用</p></div>
     </div>
     <div class="giant">MESHI</div>
@@ -598,6 +598,11 @@ function radius(){var m=mode();return Math.max(0,State.mins-m.fixed)*m.speed;}
 function tmin(d){var m=mode();return d/m.speed+m.fixed;}
 function hourNum(){var p=State.time.split(":");return (+p[0])+(+p[1])/60;}
 function yen(n){return "¥"+n.toLocaleString("en-US");}
+/* 人均：有区间就显示区间（远程数据），否则单值（演示数据） */
+function priceText(s){
+ if(s.budgetLo && s.budgetHi && s.budgetLo!==s.budgetHi) return yen(s.budgetLo)+"–"+s.budgetHi.toLocaleString("en-US");
+ return yen(s.budgetHi||s.budget||0);
+}
 function cl(x){return Math.max(0,Math.min(1,x));}
 function popOf(s){return cl(.7*((s.rating-3.2)/1.4)+.3*Math.min(1,Math.log10(s.reviews)/3.2));}
 
@@ -650,7 +655,7 @@ var SMOKE_TO_PROTO={full:"full","partial":"part",none:"none",unknown:"full"};
 function rowFromResult(x){
  return {
   s:{id:x.id,name:x.name,g:x.genre.code,lat:x.lat,lng:x.lng,station:x.station,
-     budget:x.budget.mid,cap:x.partyCapacity||x.seats||0,
+     budget:x.budget.mid,budgetLo:x.budget.lo,budgetHi:x.budget.hi,cap:x.partyCapacity||x.seats||0,
      room:x.privateRoom&&x.privateRoom.available?1:0,roomDetail:x.privateRoom?x.privateRoom.detail:"",
      nonsmoke:SMOKE_TO_PROTO[x.nonSmoking]||"full",course:0,card:x.card?1:0,
      rating:x.rating,reviews:x.userRatingCount,ratingSrc:x.ratingSource,mapsUri:x.googleMapsUri||null,
@@ -854,7 +859,7 @@ function paint(res){
      '<div class="cmeta">'+
        '<span>'+ico("pin")+s.station+'</span>'+
        ratingMeta(s)+
-       '<span class="price">'+yen(s.budget)+' <span style="color:var(--ink-3);font-family:var(--sans);font-size:11.5px">/ 人</span></span>'+
+       '<span class="price">'+priceText(s)+' <span style="color:var(--ink-3);font-family:var(--sans);font-size:11.5px">/ 人</span></span>'+
      '</div>'+
      '<div class="why">'+ico("spark")+'<span>'+(r.whyText||why(r))+'</span></div>'+
      '<div class="pays">'+(s.room?'<span class="pay">'+ico("room")+'包间</span>':'')+pays+'</div>'+
@@ -917,7 +922,7 @@ function openDrawer(r){
  $("dr-kv").innerHTML=
   '<dt>评分</dt><dd>'+ratingLine+'</dd>'+
   '<dt>营业</dt><dd>'+hoursLine+'</dd>'+
-  '<dt>人均</dt><dd>'+yen(s.budget)+'</dd>'+
+  '<dt>人均</dt><dd>'+priceText(s)+' / 人</dd>'+
   '<dt>到达</dt><dd>'+(Math.round(r.t)<1?m.n+'就到，几乎在门口':m.n+' 约 '+Math.round(r.t)+' 分钟')+' · 直线 '+(r.d<1000?r.d+' m':(r.d/1000).toFixed(1)+' km')+'</dd>'+
   '<dt>容纳</dt><dd>'+(s.cap?'最多 '+s.cap+' 人':'人数未标注')+(s.room?' · 有包间'+(s.roomDetail?'：'+s.roomDetail:''):'')+'</dd>'+
   '<dt>支付</dt><dd>'+(s.card?'可刷卡':'仅现金')+' · '+SMOKE[s.nonsmoke]+(s.coupon?' · 有优惠券':'')+'</dd>';

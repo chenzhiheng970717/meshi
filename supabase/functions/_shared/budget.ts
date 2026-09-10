@@ -15,10 +15,11 @@ export interface BudgetRange {
  */
 export function parseBudgetName(name: string | null | undefined): BudgetRange | null {
   if (!name) return null;
-  const s = name.replace(/[０-９]/g, (c) =>
-    String.fromCharCode(c.charCodeAt(0) - 0xfee0)).replace(/[〜~]/g, "～");
-  const nums = [...s.matchAll(/(\d[\d,]*)/g)].map((m) =>
-    Number(m[1].replace(/,/g, "")));
+  const s = name
+    .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .replace(/[〜~]/g, "～")
+    .replace(/[,，]/g, ""); // 去掉千分位（含全角逗号）
+  const nums = [...s.matchAll(/(\d+)/g)].map((m) => Number(m[1]));
   if (nums.length === 0) return null;
 
   let lo: number;
@@ -46,9 +47,24 @@ export function budgetOverlaps(
   shop: BudgetRange,
   reqMin: number,
   reqMax: number,
-  tol = 0.15,
+  tol = 0.1,
 ): boolean {
   const lo = reqMin * (1 - tol);
   const hi = reqMax * (1 + tol);
   return shop.lo <= hi && shop.hi >= lo;
+}
+
+/**
+ * 区间覆盖率：店铺人均区间与用户预算区间的重叠宽度，占用户区间宽度的比例。
+ * 用户 2000–5000、店铺 4000–6000 → 重叠 4000–5000 = 1000，占 3000 → 0.33。
+ * 打分只当小权重的加分项，真正的过滤靠 budgetOverlaps。
+ */
+export function budgetCoverage(
+  shop: BudgetRange,
+  reqMin: number,
+  reqMax: number,
+): number {
+  const reqWidth = Math.max(1, reqMax - reqMin);
+  const overlap = Math.max(0, Math.min(shop.hi, reqMax) - Math.max(shop.lo, reqMin));
+  return Math.max(0, Math.min(1, overlap / reqWidth));
 }

@@ -74,20 +74,21 @@ export async function getMasters(key?: string): Promise<Masters> {
 }
 
 /** 把用户的人均预算区间映射成 budget 码（一次最多 2 个）。 */
+/**
+ * 把用户预算区间映射成 HotPepper budget 码（一次最多 2 个，是 API 的硬限制）。
+ * 用户区间跨了 > 2 个档时，宁可不传 budget 参数（返回 []），靠 pipeline 的
+ * budgetOverlaps 后过滤 —— 否则会漏掉一整档的店（这就是"人均全一样"的根因）。
+ */
 export function budgetCodesFor(
   budgets: MasterEntry[],
   min: number,
   max: number,
 ): string[] {
-  const scored = budgets
-    .map((b) => ({ b, r: parseBudgetName(b.name) }))
-    .filter((x) => x.r && x.r.lo <= max && x.r.hi >= min)
-    .sort((a, b) => {
-      // 与请求区间中点最近的优先
-      const mid = (min + max) / 2;
-      return Math.abs((a.r!.mid) - mid) - Math.abs((b.r!.mid) - mid);
-    });
-  return scored.slice(0, 2).map((x) => x.b.code);
+  const hit = budgets
+    .map((b) => ({ code: b.code, r: parseBudgetName(b.name) }))
+    .filter((x) => x.r && x.r.lo <= max && x.r.hi >= min);
+  if (hit.length === 0 || hit.length > 2) return [];
+  return hit.map((x) => x.code);
 }
 
 /** 测试用：清掉进程内缓存 */
