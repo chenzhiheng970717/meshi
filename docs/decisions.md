@@ -23,7 +23,7 @@
 
 ## ADR-002 店铺数据源选 HotPepper，不选 Yelp / Google
 
-**日期** 2026-09-08 · **状态** 已采纳
+**日期** 2026-09-08 · **状态** ⚠️ 已被 [ADR-008](#adr-008) 取代（2026-09-10）
 
 **背景** 需要一个能按预算、人数、包间筛选的东京餐厅数据源。
 
@@ -44,7 +44,7 @@
 
 ## ADR-003 超过 3km 的搜索用八方位多中心点采样
 
-**日期** 2026-09-08 · **状态** 已采纳
+**日期** 2026-09-08 · **状态** ⚠️ 随 ADR-002 一起失效（Google Nearby 半径上限 50km，不需要采样）
 
 **背景** HotPepper 的 `range` 最大只有 3000m，而「驾车 30 分钟」的可达半径是 6km。
 
@@ -135,4 +135,54 @@ Text Search / Place Details 取 `rating` / `userRatingCount`，结果随 HotPepp
 - 同样占 Google 配额，**Cloud Console 里 Geocoding 也要设每日上限**（建议 500/天）。
 - 调用在服务端，key 不进客户端。
 - 常用地址存 Postgres 时只存解析后的坐标 + 用户原始输入，不缓存 Google 的其他返回字段。
-- 定位按钮（`navigator.geolocation`）直接给坐标，不走地理编码，不占配额。
+- 定位按钮（`navigator.geolocation`）直接给坐标，反向地理编码显示地址（占配额，有缓存）。
+
+---
+
+## ADR-008 店铺数据源从 HotPepper 转向 Google Places (New)
+
+**日期** 2026-09-10 · **状态** 已采纳 · **取代** [ADR-002](#adr-002)，连带使 [ADR-003](#adr-003) 失效
+
+**背景** 接通 HotPepper 后实测：商业区（新宿、渋谷）候选池 200–300 家够用，但
+住宅区个位数（石神井公園 9 家、大森海岸 5 家）。这正是 ADR-002 当初写下的
+「结构性缺口」——HotPepper 只收录做线上营销的店。同时 ADR-004 已经为了评分接了
+Google Places，等于两套数据源并行维护。
+
+复核 Google Places API (New) 的实际字段后，ADR-002 里「Google 只有 price_level
+四档、人数和包间没有」的判断需要修正：
+
+- **`priceRange`**（2024 年加入）返回真实日元人均区间（如 `¥3,000–5,000`），比
+  HotPepper 的固定档还准
+- **`regularOpeningHours.weekdayDescriptions`** 是结构化营业时间，不用再写自由文本解析器
+- `rating` / `userRatingCount` / `primaryType` / `photos` 一次搜索调用全带回
+
+**决定** MVP 数据源改用 Google Places API (New)（Text Search / Nearby Search），
+弃用 HotPepper。
+
+**理由**
+- 覆盖率：Google 几乎收录全部营业餐厅，住宅区不再是死角
+- 一次搜索 ~3 次 API 调用（翻页凑候选池），比「HotPepper + 每店查一次 Google 评分」
+  的 ~20 次还省
+- 营业时间结构化 → 删掉 `openHours.ts` 自由文本解析这一大块不确定性
+- 不再受 Recruit 利用規約约束：不需要 24h 缓存上限、不需要页脚署名、商用不需书面同意
+- ADR-003 的多中心点采样作废（Nearby 半径上限 50km）
+- 只有一套数据源和一个 API key（Google），运维简单
+
+**代价**
+- **放弃 `party_capacity`（能坐几人）和 `private_room`（包间）的精确筛选** —— Google
+  没有这两个字段。处理：
+  - 「人数」从硬过滤降级为软信号：只在人数 ≥ 8 且店铺规模明显偏小时，在推荐理由里
+    提示「大团请先电话确认」，不再据此过滤
+  - 「包间」标签去掉；`reservable` 布尔值作为弱替代（「可预约」）
+- 优惠券 / 宴会套餐信息没有
+- 成本从「$0（HotPepper 免费）」变成 Google Enterprise 档 ~$0.035–0.04/次调用；
+  每月有免费额度（Enterprise 约 1000 次），个人使用基本 $0，多用户后需盯配额
+- `priceRange` 是 Enterprise 字段，配额熔断更重要（延续 ADR-004 的两道熔断）
+- 分类要把 HotPepper 的 17 个 genre 码映射到 Google 的 `primaryType`（`japanese_restaurant`
+  / `ramen_restaurant` / `bar` …）
+
+**未推翻的**
+- ADR-005（key 只在 Edge Function）对 Google key 同样适用
+- ADR-004 的「自建『喜欢』比例并行积累、长期切成主信号」不变 —— Google 评分也是外部
+  依赖，自有数据仍是方向
+- 合成人气分作为 Google 未命中时的兜底保留
